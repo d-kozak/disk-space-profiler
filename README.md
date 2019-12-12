@@ -30,3 +30,13 @@ The following aspects will be evaluated:
 2. The tool’s performance and responsiveness.
 3. Simplicity and clarity of the source code.
 4. User experience.
+
+## Used technology
+* Written in Kotlin 
+* TornadoFX used for GUI - https://tornadofx.io/
+    * Based on the examples from https://github.com/edvin/tornadofx-samples
+        * TreeView -  https://github.com/edvin/tornadofx-samples/tree/master/treeviews
+    
+# Build
+Note if you are on Ubuntu, please make sure you have a jdk version with [javafx included](https://askubuntu.com/questions/1091157/javafx-missing-ubuntu-18-04).
+
