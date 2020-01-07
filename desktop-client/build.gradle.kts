@@ -4,6 +4,8 @@
  * This generated file contains a sample Kotlin application project to get you started.
  */
 
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin on the JVM.
     id("org.jetbrains.kotlin.jvm").version("1.3.21")
@@ -18,9 +20,14 @@ repositories {
     jcenter()
 }
 
+tasks.withType<KotlinCompile> {
+    kotlinOptions.jvmTarget = "1.8"
+}
+
 dependencies {
     compile(project(":scanner"))
 
+    compile("no.tornado:tornadofx:1.7.19")
 
     // Use the Kotlin JDK 8 standard library.
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")

@@ -10,6 +10,6 @@ class LibraryTest {
     @Test
     fun testSomeLibraryMethod() {
         val classUnderTest = Library()
-        assertEquals(classUnderTest.greeting, "Hello world.")
+        assertEquals(classUnderTest.greeting, "Hello world from the lib :)")
     }
 }

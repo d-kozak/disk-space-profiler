@@ -6,6 +6,6 @@ package io.dkozak.profiler.scanner
 class Library {
     val greeting: String
         get() {
-            return "Hello world."
+            return "Hello world from the lib :)"
         }
 }

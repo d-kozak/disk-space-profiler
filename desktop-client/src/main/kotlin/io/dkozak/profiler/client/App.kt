@@ -4,7 +4,18 @@
 package io.dkozak.profiler.client
 
 import io.dkozak.profiler.scanner.Library
+import tornadofx.*
+
+class RootView : View() {
+    override val root = vbox {
+        button("Press me")
+        label(Library().greeting)
+    }
+}
+
+class DiskSpaceProfiler() : App(RootView::class)
 
 fun main(args: Array<String>) {
     println(Library().greeting)
+    launch<DiskSpaceProfiler>(args)
 }
