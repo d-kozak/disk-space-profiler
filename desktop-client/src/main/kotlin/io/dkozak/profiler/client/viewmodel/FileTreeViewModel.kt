@@ -1,9 +1,7 @@
 package io.dkozak.profiler.client.viewmodel
 
 import io.dkozak.profiler.client.model.FileTreeModel
-import io.dkozak.profiler.scanner.model.DirectoryEntry
-import io.dkozak.profiler.scanner.model.FileTreeEntry
-import io.dkozak.profiler.scanner.model.RootEntry
+import io.dkozak.profiler.scanner.fs.FsNode
 import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.property.SimpleStringProperty
 import javafx.collections.FXCollections
@@ -15,35 +13,29 @@ class FileTreeViewModel : ViewModel() {
 
     val fileTreeProperty = fileTreeModel.fileTreeProperty
 
-    val selectedNodeContentProperty = FXCollections.observableArrayList<FileTreeEntry>()
+    val selectedNodeContentProperty = FXCollections.observableArrayList<FsNode>()
     val selectedNodeNameProperty = SimpleStringProperty(this, "selectedNodeName", "")
 
-    val parentDirectoryProperty = SimpleObjectProperty<FileTreeEntry>(this, "parrentDirectory", null)
+    val parentDirectoryProperty = SimpleObjectProperty<FsNode.DirectoryNode>(this, "parentDirectory", null)
 
     fun newScan(rootDirectory: String, task: FXTask<*>) {
         fileTreeModel.newScan(rootDirectory, task)
     }
 
-    fun partialScan(selectedNode: FileTreeEntry, task: FXTask<*>) {
+    fun partialScan(selectedNode: FsNode, task: FXTask<*>) {
         fileTreeModel.partialScan(selectedNode, task)
     }
 
-    fun entrySelected(entry: FileTreeEntry) {
-        when (entry) {
-            is DirectoryEntry -> {
+    fun entrySelected(node: FsNode) {
+        when (node) {
+            is FsNode.DirectoryNode -> {
                 selectedNodeContentProperty.clear()
-                selectedNodeContentProperty.addAll(entry.files)
-                selectedNodeNameProperty.set(entry.name)
-                parentDirectoryProperty.set(entry.parent)
+                selectedNodeContentProperty.addAll(node.files)
+                selectedNodeNameProperty.set(node.file.name)
+                parentDirectoryProperty.set(node.parent)
             }
-            is RootEntry -> {
-                selectedNodeContentProperty.clear()
-                selectedNodeContentProperty.addAll(entry.files)
-                selectedNodeNameProperty.set("/")
-                parentDirectoryProperty.set(entry.parent)
-            }
-            else -> {
-                System.err.println("not supported yet")
+            is FsNode.FileNode -> {
+                println("not supportted yet")
             }
         }
     }

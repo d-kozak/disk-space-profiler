@@ -1,8 +1,7 @@
 package io.dkozak.profiler.client.view
 
 import io.dkozak.profiler.client.viewmodel.FileTreeViewModel
-import io.dkozak.profiler.scanner.model.DirectoryEntry
-import io.dkozak.profiler.scanner.model.FileEntry
+import io.dkozak.profiler.scanner.fs.FsNode
 import javafx.scene.input.KeyCode
 import javafx.scene.layout.Priority
 import javafx.scene.text.FontWeight
@@ -40,15 +39,11 @@ class DirectoryView : View() {
                 graphic = cache {
                     hbox {
                         when (it) {
-                            is DirectoryEntry -> {
-                                label("dir ${it.name}")
+                            is FsNode.DirectoryNode -> {
+                                label("dir ${it.file.name}")
                             }
-                            is FileEntry -> {
-                                label("file ${it.name}")
-                            }
-                            else -> {
-                                System.err.println("root entry should never be here")
-                                label("err")
+                            is FsNode.FileNode -> {
+                                label("file ${it.file.name}")
                             }
                         }
                     }

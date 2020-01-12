@@ -29,6 +29,13 @@ dependencies {
 
     compile("no.tornado:tornadofx:1.7.19")
 
+    compile("io.github.microutils:kotlin-logging:1.6.22")
+    compile("org.slf4j:slf4j-api:1.7.25")
+    compile("org.apache.logging.log4j:log4j-core:2.9.1")
+    compile("org.apache.logging.log4j:log4j-api:2.9.1")
+    compile("org.apache.logging.log4j:log4j-slf4j-impl:2.9.1")
+
+
     // Use the Kotlin JDK 8 standard library.
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 
