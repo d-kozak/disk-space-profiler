@@ -6,6 +6,7 @@ import io.dkozak.profiler.scanner.model.FileEntry
 import io.dkozak.profiler.scanner.model.FileTreeEntry
 import io.dkozak.profiler.scanner.model.RootEntry
 import javafx.scene.control.TreeItem
+import javafx.scene.input.KeyCode
 import tornadofx.*
 
 class FileTreeView : View() {
@@ -30,6 +31,14 @@ class FileTreeView : View() {
                 is RootEntry -> node.files
                 is DirectoryEntry -> node.files
                 is FileEntry -> null
+            }
+        }
+
+        addEventFilter(javafx.scene.input.KeyEvent.KEY_PRESSED) { event ->
+            if ((event.code == KeyCode.ENTER) && !event.isMetaDown && this.selectionModel.selectedItems.size == 1) {
+                val node = this.selectionModel.selectedItems[0]
+                node.expandedProperty().set(true)
+                fileTreeViewModel.entrySelected(node.value)
             }
         }
 
