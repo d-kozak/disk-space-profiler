@@ -50,6 +50,20 @@ data class DirectoryEntry(val name: String, val files: List<FileTreeEntry>) : Fi
 
 data class FileEntry(val name: String) : FileTreeEntry()
 
+fun FXTask<*>.runScan(rootDirectory: String) {
+    println("here")
+    updateMessage("Init")
+    updateProgress(3, 10)
+    Thread.sleep(3000)
+    updateMessage("Step 1/2")
+    updateProgress(6, 10)
+    Thread.sleep(3000)
+    updateMessage("Step 2/2")
+    updateProgress(9, 10)
+    Thread.sleep(3000)
+    println("fin")
+}
+
 class FileTreeView : View() {
 
     private val dummyFileRoot: FileTreeEntry = RootEntry(
@@ -111,7 +125,15 @@ class DirectoryView : View() {
             }
             contextmenu {
                 item("Open")
-                item("Refresh")
+                item("Refresh") {
+                    action {
+                        val rootItem = selectedItem ?: return@action
+                        runAsync {
+                            runScan(rootItem)
+                        }
+
+                    }
+                }
                 item("Delete")
             }
         }
@@ -121,7 +143,10 @@ class DirectoryView : View() {
 class StatusBarView : View() {
     override val root: Parent = borderpane {
         left = label("Last scan at DD/MM/YYYY")
-        right = label("Used 23/50 gb")
+        right = hbox(2) {
+            add<ProgressView>()
+            label("Used 23/50 gb")
+        }
 
         children.style {
             padding = box(2.px, 5.px)
@@ -130,19 +155,14 @@ class StatusBarView : View() {
 }
 
 
-class ProgressView : View() {
+class ProgressView : Fragment() {
     val status: TaskStatus by inject()
 
-    override val root = vbox(4) {
+    override val root = hbox(4) {
         alignment = Pos.CENTER
+        label(status.message)
+        progressbar(status.progress)
         visibleWhen { status.running }
-        label(status.title).style { fontWeight = FontWeight.BOLD }
-        hbox(4) {
-            alignment = Pos.CENTER
-            label(status.message)
-            progressbar(status.progress)
-            visibleWhen { status.running }
-        }
     }
 }
 
@@ -198,16 +218,7 @@ class StartAnalysisDialog : Fragment() {
                                 enableWhen(status.running.not())
                                 action {
                                     runAsync {
-                                        //updateTitle("Analysis running")
-                                        updateMessage("Init")
-                                        updateProgress(3, 10)
-                                        Thread.sleep(3000)
-                                        updateMessage("Step 1/2")
-                                        updateProgress(6, 10)
-                                        Thread.sleep(3000)
-                                        updateMessage("Step 2/2")
-                                        updateProgress(9, 10)
-                                        Thread.sleep(3000)
+                                        runScan(rootDir.value)
                                     } ui {
                                         // close()
                                     }
