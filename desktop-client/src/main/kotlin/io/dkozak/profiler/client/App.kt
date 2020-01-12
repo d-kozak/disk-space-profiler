@@ -39,7 +39,11 @@ class AppMenu : View() {
     }
 }
 
-sealed class FileTreeEntry
+sealed class FileTreeEntry {
+    val fullPath: String
+        get() = "/"
+}
+
 data class RootEntry(val files: List<FileTreeEntry>) : FileTreeEntry() {
     constructor(vararg files: FileTreeEntry) : this(files.toList())
 }
@@ -51,17 +55,13 @@ data class DirectoryEntry(val name: String, val files: List<FileTreeEntry>) : Fi
 data class FileEntry(val name: String) : FileTreeEntry()
 
 fun FXTask<*>.runScan(rootDirectory: String) {
-    println("here")
-    updateMessage("Init")
+    updateMessage("scanning: $rootDirectory")
     updateProgress(3, 10)
     Thread.sleep(3000)
-    updateMessage("Step 1/2")
     updateProgress(6, 10)
     Thread.sleep(3000)
-    updateMessage("Step 2/2")
     updateProgress(9, 10)
     Thread.sleep(3000)
-    println("fin")
 }
 
 class FileTreeView : View() {
@@ -100,7 +100,14 @@ class FileTreeView : View() {
 
         contextmenu {
             item("Open")
-            item("Refresh")
+            item("Refresh") {
+                action {
+                    val rootItem = selectedValue ?: return@action
+                    runAsync {
+                        runScan(rootItem.fullPath)
+                    }
+                }
+            }
             item("Delete")
         }
     }
