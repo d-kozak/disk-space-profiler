@@ -1,15 +1,19 @@
 package io.dkozak.profiler.client
 
 import io.dkozak.profiler.scanner.Library
+import javafx.beans.property.SimpleStringProperty
 import javafx.geometry.Pos
 import javafx.scene.Parent
 import javafx.scene.control.TreeItem
 import javafx.scene.layout.Priority
 import javafx.scene.text.FontWeight
+import javafx.stage.StageStyle
 import tornadofx.*
+import java.io.File
 
 class RootView : View() {
     override val root = borderpane {
+        title = "Disk space analyzer"
         minHeight = 600.0
         minWidth = 800.0
         top<AppMenu>()
@@ -22,8 +26,11 @@ class RootView : View() {
 class AppMenu : View() {
     override val root: Parent = menubar {
         menu("Analysis") {
-            item("Run")
-            item("History")
+            item("Run") {
+                action {
+                    find<StartAnalysisDialog>().openModal(stageStyle = StageStyle.UTILITY)
+                }
+            }
         }
         menu("Help") {
             item("Intructions")
@@ -118,6 +125,98 @@ class StatusBarView : View() {
 
         children.style {
             padding = box(2.px, 5.px)
+        }
+    }
+}
+
+
+class ProgressView : View() {
+    val status: TaskStatus by inject()
+
+    override val root = vbox(4) {
+        alignment = Pos.CENTER
+        visibleWhen { status.running }
+        label(status.title).style { fontWeight = FontWeight.BOLD }
+        hbox(4) {
+            alignment = Pos.CENTER
+            label(status.message)
+            progressbar(status.progress)
+            visibleWhen { status.running }
+        }
+    }
+}
+
+class StartAnalysisDialog : Fragment() {
+    val status: TaskStatus by inject()
+
+    val rootDir = SimpleStringProperty("/")
+
+    override val root: Parent = vbox {
+        borderpane {
+            title = "Analysis configuration"
+            setPrefSize(300.0, 75.0)
+
+            style {
+                padding = box(5.px)
+            }
+
+            center {
+                vbox(4) {
+                    alignment = Pos.CENTER
+                    enableWhen(status.running.not())
+                    label("Root directory: ")
+                    textfield(rootDir)
+                    button("Select") {
+                        action {
+                            val initialDir = File(rootDir.value)
+                            val dir = chooseDirectory("Select root directory", initialDirectory = if (initialDir.exists()) initialDir else null)
+                            if (dir != null) {
+                                rootDir.set(dir.absolutePath)
+                            }
+                        }
+                    }
+
+                }
+            }
+
+            bottom {
+                borderpane {
+                    left<ProgressView>()
+                    right {
+                        hbox {
+                            alignment = Pos.BOTTOM_RIGHT
+                            button("Cancel") {
+                                action {
+                                    if (status.running.value) {
+                                        status.item.cancel()
+                                    } else {
+                                        close()
+                                    }
+                                }
+                            }
+                            button("Start") {
+                                enableWhen(status.running.not())
+                                action {
+                                    runAsync {
+                                        //updateTitle("Analysis running")
+                                        updateMessage("Init")
+                                        updateProgress(3, 10)
+                                        Thread.sleep(3000)
+                                        updateMessage("Step 1/2")
+                                        updateProgress(6, 10)
+                                        Thread.sleep(3000)
+                                        updateMessage("Step 2/2")
+                                        updateProgress(9, 10)
+                                        Thread.sleep(3000)
+                                    } ui {
+                                        // close()
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
