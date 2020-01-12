@@ -16,8 +16,9 @@ class DirectoryView : View() {
         borderpane {
             left {
                 button("<=") {
+                    enableWhen(fileTreeViewModel.parentDirectoryProperty.isNotNull)
                     action {
-                        fileTreeViewModel.goBack()
+                        fileTreeViewModel.goToParent()
                     }
                 }
             }
@@ -63,6 +64,14 @@ class DirectoryView : View() {
 
             onDoubleClick {
                 fileTreeViewModel.entrySelected(selectedItem ?: return@onDoubleClick)
+            }
+
+            shortcut("alt+right") {
+                fileTreeViewModel.entrySelected(selectedItem ?: return@shortcut)
+            }
+
+            shortcut("alt+left") {
+                fileTreeViewModel.goToParent()
             }
 
             contextmenu {

@@ -2,10 +2,7 @@ package io.dkozak.profiler.client.model
 
 import io.dkozak.profiler.client.util.ProgressAdapter
 import io.dkozak.profiler.scanner.SimpleDiscScanner
-import io.dkozak.profiler.scanner.model.DirectoryEntry
-import io.dkozak.profiler.scanner.model.FileEntry
-import io.dkozak.profiler.scanner.model.FileTreeEntry
-import io.dkozak.profiler.scanner.model.RootEntry
+import io.dkozak.profiler.scanner.model.*
 import javafx.beans.property.SimpleObjectProperty
 import tornadofx.*
 
@@ -21,7 +18,7 @@ private val dummyFileRoot: FileTreeEntry = RootEntry(
                 FileEntry("img2.png")
         ),
         FileEntry("foo.dat")
-)
+).setParentReferences()
 
 class FileTreeModel : Controller() {
 
