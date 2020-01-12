@@ -7,11 +7,13 @@ import io.dkozak.profiler.scanner.fs.DiskRoot
 import io.dkozak.profiler.scanner.fs.FsNode
 import io.dkozak.profiler.scanner.fs.FsRoot
 import javafx.beans.property.SimpleObjectProperty
+import mu.KotlinLogging
 import tornadofx.*
 import java.io.File
 
 val dummy = DiskRoot(File("."), FsNode.DirectoryNode(File("."), FsNode.FileNode(File("gradlew"))))
 
+private val logger = KotlinLogging.logger { }
 class FileTreeModel : Controller() {
 
     private val discScanner = SimpleDiscScanner()
@@ -21,6 +23,7 @@ class FileTreeModel : Controller() {
     fun newScan(rootDirectory: String, task: FXTask<*>) {
         val root = discScanner.newScan(rootDirectory, ProgressAdapter(task))
         fire(MessageEvent("Scan of '$rootDirectory' finished"))
+        logger.info { "new fstree $root" }
         onUiThread {
             fileTreeProperty.set(root)
         }

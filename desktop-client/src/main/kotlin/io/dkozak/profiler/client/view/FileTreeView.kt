@@ -29,12 +29,7 @@ class FileTreeView : View() {
         }
 
         populate { parent ->
-            when (val node = parent.value) {
-                is WindowsRoot -> node.disks
-                is DiskRoot -> node.node.files
-                is FsNode.DirectoryNode -> node.files
-                else -> null
-            }
+            populate(parent)
         }
 
         addEventFilter(javafx.scene.input.KeyEvent.KEY_PRESSED) { event ->
@@ -67,10 +62,20 @@ class FileTreeView : View() {
         }
     }
 
+    private fun populate(parent: TreeItem<Any>): Iterable<Any>? {
+        return when (val node = parent.value) {
+            is WindowsRoot -> node.disks
+            is DiskRoot -> node.node.files
+            is FsNode.DirectoryNode -> node.files
+            else -> null
+        }
+    }
+
     init {
         fileTreeViewModel.fileTreeProperty.onChange {
             val fileTree = it ?: return@onChange
             root.rootProperty().set(TreeItem(fileTree))
+            root.populate { parent -> populate(parent) }
             root.refresh()
         }
     }
