@@ -22,13 +22,13 @@ sealed class FsNode(var file: File) {
         if (this === other) return true
         if (other !is FsNode) return false
 
-        if (file != other.file) return false
+        if (file.absolutePath != other.file.absolutePath) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        return file.hashCode()
+        return file.absolutePath.hashCode()
     }
 }
 

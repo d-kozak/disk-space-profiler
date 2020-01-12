@@ -36,18 +36,17 @@ class DirectoryView : View() {
             }
 
             cellFormat {
-                graphic = cache {
-                    hbox {
-                        when (it) {
-                            is FsNode.DirectoryNode -> {
-                                label("dir ${it.file.name}")
-                            }
-                            is FsNode.FileNode -> {
-                                label("file ${it.file.name}")
-                            }
+                graphic = hbox {
+                    when (it) {
+                        is FsNode.DirectoryNode -> {
+                            label("dir ${it.file.name}")
+                        }
+                        is FsNode.FileNode -> {
+                            label("file ${it.file.name}")
                         }
                     }
                 }
+
             }
 
             addEventFilter(javafx.scene.input.KeyEvent.KEY_PRESSED) { event ->

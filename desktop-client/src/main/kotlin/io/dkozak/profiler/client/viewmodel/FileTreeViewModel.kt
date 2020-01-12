@@ -29,13 +29,12 @@ class FileTreeViewModel : ViewModel() {
     fun entrySelected(node: FsNode) {
         when (node) {
             is FsNode.DirectoryNode -> {
-                selectedNodeContentProperty.clear()
-                selectedNodeContentProperty.addAll(node.files)
+                selectedNodeContentProperty.setAll(node.files)
                 selectedNodeNameProperty.set(node.file.name)
                 parentDirectoryProperty.set(node.parent)
             }
             is FsNode.FileNode -> {
-                println("not supportted yet")
+                println("not supportted yet $node")
             }
         }
     }
