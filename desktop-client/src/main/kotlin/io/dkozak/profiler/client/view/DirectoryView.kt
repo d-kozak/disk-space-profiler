@@ -1,12 +1,14 @@
 package io.dkozak.profiler.client.view
 
-import io.dkozak.profiler.client.viewmodel.runScan
+import io.dkozak.profiler.client.model.FileTreeModel
 import javafx.geometry.Pos
 import javafx.scene.layout.Priority
 import javafx.scene.text.FontWeight
 import tornadofx.*
 
 class DirectoryView : View() {
+
+    private val fileTreeModel: FileTreeModel by inject()
 
     private val dummyFiles = listOf("File 1", "File 2", "Dir 1", "File 3", "Dir 2").asObservable()
 
@@ -28,7 +30,7 @@ class DirectoryView : View() {
                     action {
                         val rootItem = selectedItem ?: return@action
                         runAsync {
-                            runScan(rootItem)
+                            fileTreeModel.scan(rootItem, this)
                         }
 
                     }

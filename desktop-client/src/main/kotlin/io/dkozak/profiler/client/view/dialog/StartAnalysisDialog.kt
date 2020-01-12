@@ -1,7 +1,7 @@
 package io.dkozak.profiler.client.view.dialog
 
+import io.dkozak.profiler.client.model.FileTreeModel
 import io.dkozak.profiler.client.view.ProgressView
-import io.dkozak.profiler.client.viewmodel.runScan
 import javafx.beans.property.SimpleStringProperty
 import javafx.geometry.Pos
 import javafx.scene.Parent
@@ -9,9 +9,11 @@ import tornadofx.*
 import java.io.File
 
 class StartAnalysisDialog : Fragment() {
-    val status: TaskStatus by inject()
+    private val status: TaskStatus by inject()
 
-    val rootDir = SimpleStringProperty("/")
+    private val fileTreeModel: FileTreeModel by inject()
+
+    private val rootDir = SimpleStringProperty("/")
 
     override val root: Parent = vbox {
         borderpane {
@@ -60,7 +62,7 @@ class StartAnalysisDialog : Fragment() {
                                 enableWhen(status.running.not())
                                 action {
                                     runAsync {
-                                        runScan(rootDir.value)
+                                        fileTreeModel.scan(rootDir.value, this)
                                     } ui {
                                         close()
                                     }

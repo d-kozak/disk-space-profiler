@@ -1,6 +1,6 @@
 package io.dkozak.profiler.client.view
 
-import io.dkozak.profiler.client.viewmodel.runScan
+import io.dkozak.profiler.client.model.FileTreeModel
 import io.dkozak.profiler.scanner.model.DirectoryEntry
 import io.dkozak.profiler.scanner.model.FileEntry
 import io.dkozak.profiler.scanner.model.FileTreeEntry
@@ -9,6 +9,8 @@ import javafx.scene.control.TreeItem
 import tornadofx.*
 
 class FileTreeView : View() {
+
+    private val fileTreeModel: FileTreeModel by inject()
 
     private val dummyFileRoot: FileTreeEntry = RootEntry(
             FileEntry("one.txt"),
@@ -48,7 +50,7 @@ class FileTreeView : View() {
                 action {
                     val rootItem = selectedValue ?: return@action
                     runAsync {
-                        runScan(rootItem.fullPath)
+                        fileTreeModel.scan(rootItem.fullPath, this)
                     }
                 }
             }

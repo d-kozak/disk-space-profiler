@@ -4,7 +4,7 @@ import javafx.geometry.Pos
 import tornadofx.*
 
 class ProgressView : Fragment() {
-    val status: TaskStatus by inject()
+    private val status: TaskStatus by inject()
 
     override val root = hbox(4) {
         alignment = Pos.CENTER
