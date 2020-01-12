@@ -1,5 +1,7 @@
 package io.dkozak.profiler.scanner.model
 
+fun String.asFileTreeEntry() = RootEntry()
+
 sealed class FileTreeEntry {
     val fullPath: String
         get() = "/"

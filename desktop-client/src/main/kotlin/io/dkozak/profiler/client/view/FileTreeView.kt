@@ -1,6 +1,6 @@
 package io.dkozak.profiler.client.view
 
-import io.dkozak.profiler.client.model.FileTreeModel
+import io.dkozak.profiler.client.viewmodel.FileTreeViewModel
 import io.dkozak.profiler.scanner.model.DirectoryEntry
 import io.dkozak.profiler.scanner.model.FileEntry
 import io.dkozak.profiler.scanner.model.FileTreeEntry
@@ -10,29 +10,18 @@ import tornadofx.*
 
 class FileTreeView : View() {
 
-    private val fileTreeModel: FileTreeModel by inject()
-
-    private val dummyFileRoot: FileTreeEntry = RootEntry(
-            FileEntry("one.txt"),
-            DirectoryEntry("dir1",
-                    FileEntry("img.jpg"),
-                    DirectoryEntry("inner dir",
-                            FileEntry("secret.txt")
-                    )
-            ),
-            DirectoryEntry("dir2",
-                    FileEntry("img2.png")
-            ),
-            FileEntry("foo.dat")
-    )
+    private val fileTreeViewModel: FileTreeViewModel by inject()
 
     override val root = treeview<FileTreeEntry> {
-        root = TreeItem(dummyFileRoot)
+        root = TreeItem(fileTreeViewModel.fileTreeProperty.value)
         cellFormat {
             text = when (it) {
                 is RootEntry -> "/"
                 is DirectoryEntry -> it.name
                 is FileEntry -> it.name
+            }
+            onDoubleClick {
+                fileTreeViewModel.entrySelected(treeItem.value)
             }
         }
 
@@ -45,12 +34,17 @@ class FileTreeView : View() {
         }
 
         contextmenu {
-            item("Open")
+            item("Open") {
+                action {
+                    val node = selectedValue ?: return@action
+                    fileTreeViewModel.entrySelected(node)
+                }
+            }
             item("Refresh") {
                 action {
-                    val rootItem = selectedValue ?: return@action
+                    val node = selectedValue ?: return@action
                     runAsync {
-                        fileTreeModel.scan(rootItem.fullPath, this)
+                        fileTreeViewModel.partialScan(node, this)
                     }
                 }
             }
@@ -58,4 +52,10 @@ class FileTreeView : View() {
         }
     }
 
+    init {
+        fileTreeViewModel.fileTreeProperty.onChange {
+            val fileTree = it ?: return@onChange
+            root.rootProperty().set(TreeItem(fileTree))
+        }
+    }
 }

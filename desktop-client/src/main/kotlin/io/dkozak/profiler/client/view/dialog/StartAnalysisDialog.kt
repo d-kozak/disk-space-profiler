@@ -1,7 +1,7 @@
 package io.dkozak.profiler.client.view.dialog
 
-import io.dkozak.profiler.client.model.FileTreeModel
 import io.dkozak.profiler.client.view.ProgressView
+import io.dkozak.profiler.client.viewmodel.FileTreeViewModel
 import javafx.beans.property.SimpleStringProperty
 import javafx.geometry.Pos
 import javafx.scene.Parent
@@ -11,7 +11,7 @@ import java.io.File
 class StartAnalysisDialog : Fragment() {
     private val status: TaskStatus by inject()
 
-    private val fileTreeModel: FileTreeModel by inject()
+    private val fileTreeViewModel: FileTreeViewModel by inject()
 
     private val rootDir = SimpleStringProperty("/")
 
@@ -62,7 +62,7 @@ class StartAnalysisDialog : Fragment() {
                                 enableWhen(status.running.not())
                                 action {
                                     runAsync {
-                                        fileTreeModel.scan(rootDir.value, this)
+                                        fileTreeViewModel.newScan(rootDir.value, this)
                                     } ui {
                                         close()
                                     }
