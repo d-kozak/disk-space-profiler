@@ -18,9 +18,7 @@ class FileTreeView : View() {
     override val root = treeview<FsNode> {
         root = fileTreeViewModel.fileTreeProperty.value
         cellFormat {
-            graphic = hbox {
-                this += find<FileTreeNodeView>(mapOf(FileTreeNodeView::node to treeItem))
-            }
+            graphic = find<FileTreeNodeView>(mapOf(FileTreeNodeView::node to treeItem)).root
             onDoubleClick {
                 fileTreeViewModel.entrySelected(treeItem)
             }

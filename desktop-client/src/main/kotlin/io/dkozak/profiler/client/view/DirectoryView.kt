@@ -37,9 +37,7 @@ class DirectoryView : View() {
             }
 
             cellFormat {
-                graphic = hbox {
-                    this += find<FileTreeNodeView>(mapOf(FileTreeNodeView::node to it))
-                }
+                graphic = find<DirectoryNodeView>(mapOf(DirectoryNodeView::node to it)).root
             }
 
             addEventFilter(javafx.scene.input.KeyEvent.KEY_PRESSED) { event ->

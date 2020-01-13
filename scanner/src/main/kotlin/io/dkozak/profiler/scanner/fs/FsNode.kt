@@ -12,6 +12,9 @@ sealed class FsNode(var file: File) {
     val root: TreeItem<DiskRoot>
         get() = diskRoot as TreeItem<DiskRoot>
 
+    val spaceTaken: Double
+        get() = this.size.toDouble() / this.root.value.occupiedSpace
+
     companion object {
         val DEFAULT_COMPARATOR = FsNodeComparator().reversed()
     }
