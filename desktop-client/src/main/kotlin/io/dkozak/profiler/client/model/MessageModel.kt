@@ -1,11 +1,9 @@
 package io.dkozak.profiler.client.model
 
+import io.dkozak.profiler.client.event.MessageEvent
 import javafx.collections.FXCollections
 import javafx.collections.ObservableList
 import tornadofx.*
-import java.time.LocalDateTime
-
-data class MessageEvent(val text: String, val time: LocalDateTime = LocalDateTime.now()) : FXEvent()
 
 class MessageModel : Controller() {
     val messageLimit = 10

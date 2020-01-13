@@ -1,5 +1,7 @@
 package io.dkozak.profiler.client.model
 
+import io.dkozak.profiler.client.event.FileDeletedEvent
+import io.dkozak.profiler.client.event.MessageEvent
 import io.dkozak.profiler.client.util.ProgressAdapter
 import io.dkozak.profiler.client.util.onUiThread
 import io.dkozak.profiler.scanner.SimpleDiscScanner
@@ -16,6 +18,20 @@ class FileTreeModel : Controller() {
     private val discScanner = SimpleDiscScanner()
 
     val fileTreeProperty = SimpleObjectProperty<FsRoot>(this, "fileTree", null)
+
+    init {
+        subscribe<FileDeletedEvent> { event ->
+            val parent = event.node.parent
+            val currentRoot = fileTreeProperty.get() ?: return@subscribe
+            if (parent != null) {
+                if (!parent.files.remove(event.node)) {
+                    logger.warn { "could not remove node $event.node, internal representation will be outdated now" }
+                } else {
+                    fileTreeProperty.set(currentRoot)
+                }
+            }
+        }
+    }
 
     fun newScan(rootDirectory: String, task: FXTask<*>) {
         val root = discScanner.newScan(rootDirectory, ProgressAdapter(task))

@@ -1,13 +1,18 @@
 package io.dkozak.profiler.client.view
 
 
+import io.dkozak.profiler.client.view.dialog.DeleteFileDialog
 import io.dkozak.profiler.client.viewmodel.FileTreeViewModel
 import io.dkozak.profiler.scanner.fs.DiskRoot
 import io.dkozak.profiler.scanner.fs.FsNode
 import io.dkozak.profiler.scanner.fs.WindowsRoot
 import javafx.scene.control.TreeItem
 import javafx.scene.input.KeyCode
+import javafx.stage.StageStyle
+import mu.KotlinLogging
 import tornadofx.*
+
+private val logger = KotlinLogging.logger { }
 
 class FileTreeView : View() {
 
@@ -41,11 +46,6 @@ class FileTreeView : View() {
         }
 
         contextmenu {
-            item("Open") {
-                action {
-                    itemSelected(selectedValue ?: return@action)
-                }
-            }
             item("Refresh") {
                 action {
                     val node = selectedValue ?: return@action
@@ -58,7 +58,15 @@ class FileTreeView : View() {
                     }
                 }
             }
-            item("Delete")
+            item("Delete") {
+                action {
+                    if (selectedValue is FsNode) {
+                        find<DeleteFileDialog>(mapOf(DeleteFileDialog::node to selectedValue)).openModal(stageStyle = StageStyle.UTILITY)
+                    } else {
+                        logger.warn { "Attempt to delete $selectedValue, this type is not supported" }
+                    }
+                }
+            }
         }
     }
 

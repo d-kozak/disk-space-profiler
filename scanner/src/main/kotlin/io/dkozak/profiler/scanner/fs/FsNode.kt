@@ -7,8 +7,8 @@ sealed class FsNode(var file: File) {
     lateinit var disk: DiskRoot
     var size: Long = -1
 
-    class DirectoryNode(file: File, val files: List<FsNode>) : FsNode(file) {
-        constructor(file: File, vararg files: FsNode) : this(file, files.toList())
+    class DirectoryNode(file: File, val files: MutableList<FsNode>) : FsNode(file) {
+        constructor(file: File, vararg files: FsNode) : this(file, files.toMutableList())
 
         override fun toString(): String = "DirectoryNode(file=$file,files=$files)"
 

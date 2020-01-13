@@ -1,10 +1,12 @@
 package io.dkozak.profiler.client.view
 
+import io.dkozak.profiler.client.view.dialog.DeleteFileDialog
 import io.dkozak.profiler.client.viewmodel.FileTreeViewModel
 import io.dkozak.profiler.scanner.fs.FsNode
 import javafx.scene.input.KeyCode
 import javafx.scene.layout.Priority
 import javafx.scene.text.FontWeight
+import javafx.stage.StageStyle
 import tornadofx.*
 
 class DirectoryView : View() {
@@ -51,8 +53,11 @@ class DirectoryView : View() {
 
             addEventFilter(javafx.scene.input.KeyEvent.KEY_PRESSED) { event ->
                 val selectedItem = this.selectedItem
-                if ((event.code == KeyCode.ENTER) && !event.isMetaDown && selectedItem != null) {
-                    fileTreeViewModel.entrySelected(selectedItem)
+                if ((event.code == KeyCode.ENTER || event.code == KeyCode.DELETE) && !event.isMetaDown && selectedItem != null) {
+                    when (event.code) {
+                        KeyCode.ENTER -> fileTreeViewModel.entrySelected(selectedItem)
+                        KeyCode.DELETE -> find<DeleteFileDialog>(mapOf(DeleteFileDialog::node to selectedItem)).openModal(stageStyle = StageStyle.UTILITY)
+                    }
                 }
             }
 
@@ -78,7 +83,12 @@ class DirectoryView : View() {
 
                     }
                 }
-                item("Delete")
+                item("Delete") {
+                    action {
+                        find<DeleteFileDialog>(mapOf(DeleteFileDialog::node to (selectedItem
+                                ?: return@action))).openModal(stageStyle = StageStyle.UTILITY)
+                    }
+                }
             }
         }
     }
