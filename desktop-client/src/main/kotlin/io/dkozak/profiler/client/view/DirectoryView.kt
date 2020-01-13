@@ -2,6 +2,7 @@ package io.dkozak.profiler.client.view
 
 import io.dkozak.profiler.client.view.dialog.DeleteFileDialog
 import io.dkozak.profiler.client.viewmodel.FileTreeViewModel
+import io.dkozak.profiler.scanner.fs.FsNode
 import javafx.scene.input.KeyCode
 import javafx.scene.layout.Priority
 import javafx.scene.text.FontWeight
@@ -66,9 +67,11 @@ class DirectoryView : View() {
             contextmenu {
                 item("Refresh") {
                     action {
-                        val rootItem = selectedItem ?: return@action
+                        var node = selectedItem ?: return@action
+                        if (node.value is FsNode.LazyNode)
+                            node = node.parent ?: node
                         runAsync {
-                            fileTreeViewModel.partialScan(rootItem, this)
+                            fileTreeViewModel.partialScan(node, this)
                         }
 
                     }

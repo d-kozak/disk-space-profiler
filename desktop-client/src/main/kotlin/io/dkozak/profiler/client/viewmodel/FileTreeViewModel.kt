@@ -1,6 +1,8 @@
 package io.dkozak.profiler.client.viewmodel
 
 import io.dkozak.profiler.client.model.FileTreeModel
+import io.dkozak.profiler.client.util.onUiThread
+import io.dkozak.profiler.scanner.ScanConfig
 import io.dkozak.profiler.scanner.fs.FsNode
 import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.property.SimpleStringProperty
@@ -29,12 +31,15 @@ class FileTreeViewModel : ViewModel() {
         }
     }
 
-    fun newScan(rootDirectory: String, task: FXTask<*>) {
-        fileTreeModel.newScan(rootDirectory, task)
+    fun newScan(rootDirectory: String, scanConfig: ScanConfig, task: FXTask<*>) {
+        fileTreeModel.newScan(rootDirectory, scanConfig, task)
     }
 
     fun partialScan(selectedNode: TreeItem<FsNode>, task: FXTask<*>) {
-        fileTreeModel.partialScan(selectedNode, task)
+        val newTree = fileTreeModel.partialScan(selectedNode, task)
+        onUiThread {
+            entrySelected(newTree)
+        }
     }
 
     fun entrySelected(node: TreeItem<FsNode>) {

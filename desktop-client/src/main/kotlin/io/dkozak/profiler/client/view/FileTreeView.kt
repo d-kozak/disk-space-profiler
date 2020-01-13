@@ -20,7 +20,8 @@ class FileTreeView : View() {
         cellFormat {
             graphic = find<FileTreeNodeView>(mapOf(FileTreeNodeView::node to treeItem)).root
             onDoubleClick {
-                fileTreeViewModel.entrySelected(treeItem)
+                if (treeItem.value !is FsNode.LazyNode)
+                    fileTreeViewModel.entrySelected(treeItem)
             }
         }
 
@@ -35,7 +36,9 @@ class FileTreeView : View() {
         contextmenu {
             item("Refresh") {
                 action {
-                    val node = selectionModel.selectedItems.firstOrNull() ?: return@action
+                    var node = selectionModel.selectedItems.firstOrNull() ?: return@action
+                    if (node.value is FsNode.LazyNode)
+                        node = node.parent ?: node
                     runAsync {
                         fileTreeViewModel.partialScan(node, this)
                     }

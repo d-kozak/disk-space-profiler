@@ -13,26 +13,29 @@ class DirectoryNodeView : Fragment() {
     val node: TreeItem<FsNode> by param()
 
     override val root: Parent = hbox(4) {
-        if (node.value is FsNode.DirectoryNode)
-            imageview("folder.png")
-        label(node.value.file.name)
+        if (node.value is FsNode.LazyNode) {
+            label("...")
+        } else {
+            if (node.value is FsNode.DirectoryNode)
+                imageview("folder.png")
+            label(node.value.file.name)
 
-        hbox(4) {
-            alignment = Pos.CENTER_RIGHT
-            hboxConstraints {
-                hGrow = Priority.ALWAYS
-            }
-            if (node.parent != null && node.value.spaceTaken >= 0.1)
-                progressbar {
-                    progress = node.value.spaceTaken
-                    style {
-                        accentColor = spaceColor(node.value.spaceTaken)
-                    }
+            hbox(4) {
+                alignment = Pos.CENTER_RIGHT
+                hboxConstraints {
+                    hGrow = Priority.ALWAYS
                 }
-            label(node.value.size.toString())
+                if (node.parent != null && node.value.spaceTaken >= 0.1)
+                    progressbar {
+                        progress = node.value.spaceTaken
+                        style {
+                            accentColor = spaceColor(node.value.spaceTaken)
+                        }
+                    }
+                label(node.value.size.toString())
+            }
+
         }
-
-
     }
 
 }

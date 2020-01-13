@@ -9,21 +9,21 @@ internal class SimpleDiscScannerTest {
     @Test
     fun `scan this module`() {
         val scanner = SimpleDiscScanner()
-        val diskRoot = scanner.newScan(".", monitor)
+        val diskRoot = scanner.newScan(".", ScanConfig(treeDepth = Int.MAX_VALUE), monitor)
         println(diskRoot)
     }
 
     @Test
     fun `scan the whole project`() {
         val scanner = SimpleDiscScanner()
-        val diskRoot = scanner.newScan("..", monitor)
+        val diskRoot = scanner.newScan("..", ScanConfig(treeDepth = Int.MAX_VALUE), monitor)
         println(diskRoot)
     }
 
     @Test
     fun `scan the while unit file system`() {
         val scanner = SimpleDiscScanner()
-        val diskRoot = scanner.newScan("/", monitor)
+        val diskRoot = scanner.newScan("/", ScanConfig(), monitor)
         println(diskRoot)
     }
 }

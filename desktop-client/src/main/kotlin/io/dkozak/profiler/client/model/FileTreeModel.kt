@@ -3,6 +3,7 @@ package io.dkozak.profiler.client.model
 import io.dkozak.profiler.client.event.MessageEvent
 import io.dkozak.profiler.client.util.ProgressAdapter
 import io.dkozak.profiler.client.util.onUiThread
+import io.dkozak.profiler.scanner.ScanConfig
 import io.dkozak.profiler.scanner.SimpleDiscScanner
 import io.dkozak.profiler.scanner.fs.FsNode
 import javafx.beans.property.SimpleObjectProperty
@@ -18,8 +19,8 @@ class FileTreeModel : Controller() {
 
     val fileTreeProperty = SimpleObjectProperty<TreeItem<FsNode>>(this, "fileTree", null)
 
-    fun newScan(rootDirectory: String, task: FXTask<*>) {
-        val root = discScanner.newScan(rootDirectory, ProgressAdapter(task))
+    fun newScan(rootDirectory: String, scanConfig: ScanConfig, task: FXTask<*>) {
+        val root = discScanner.newScan(rootDirectory, scanConfig, ProgressAdapter(task))
         fire(MessageEvent("Scan of '$rootDirectory' finished"))
         logger.info { "new fstree $root" }
         onUiThread {
@@ -27,9 +28,9 @@ class FileTreeModel : Controller() {
         }
     }
 
-    fun partialScan(selectedNode: TreeItem<FsNode>, task: FXTask<*>) {
+    fun partialScan(selectedNode: TreeItem<FsNode>, task: FXTask<*>): TreeItem<FsNode> {
         val parent = selectedNode.parent
-        val newTree = discScanner.partialScan(selectedNode, ProgressAdapter(task))
+        val newTree = discScanner.partialScan(selectedNode, ScanConfig(), ProgressAdapter(task))
         onUiThread {
             if (parent != null) {
                 selectedNode.removeFromParent()
@@ -41,6 +42,7 @@ class FileTreeModel : Controller() {
             }
             fire(MessageEvent("Rescan of '${selectedNode.value.file.absolutePath}' finished"))
         }
+        return newTree
     }
 
     fun removeNode(node: TreeItem<FsNode>): Boolean {

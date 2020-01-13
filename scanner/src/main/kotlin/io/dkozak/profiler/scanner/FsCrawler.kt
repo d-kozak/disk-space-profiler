@@ -3,17 +3,12 @@ package io.dkozak.profiler.scanner
 import io.dkozak.profiler.scanner.fs.FsNode
 import io.dkozak.profiler.scanner.util.FileSize
 import io.dkozak.profiler.scanner.util.ProgressMonitor
+import io.dkozak.profiler.scanner.util.calcSize
 import javafx.scene.control.TreeItem
 import java.io.File
 
-fun String.crawl(progressMonitor: ProgressMonitor): TreeItem<FsNode> {
-    val rootFile = File(this)
-    check(rootFile.exists()) { "Given root file $this does not exist" }
-    check(rootFile.isDirectory) { "Given root file $this is not a directory" }
-    return FsCrawler(TreeItem(FsNode.DiskRoot(rootFile)), progressMonitor).crawl()
-}
 
-class FsCrawler(val diskRoot: TreeItem<FsNode>, private val monitor: ProgressMonitor) {
+class FsCrawler(val diskRoot: TreeItem<FsNode>, private val config: ScanConfig, private val monitor: ProgressMonitor) {
 
     val errorMessages = mutableListOf<String>()
 
@@ -32,13 +27,22 @@ class FsCrawler(val diskRoot: TreeItem<FsNode>, private val monitor: ProgressMon
         }
     }
 
-    fun recursiveScan(currentFile: File): TreeItem<FsNode> {
-        monitor.message("ScanInfo: ${fileCount} files, ${directoryCount} directories")
+    fun recursiveScan(currentFile: File, currentDepth: Int = 0): TreeItem<FsNode> {
+        monitor.message("ScanInfo: ${fileCount} files, ${directoryCount} directories, depth $currentDepth")
         check(currentFile.exists()) { "file ${currentFile.absolutePath} does not exist" }
         if (!currentFile.isDirectory) {
             return processSingleFile(currentFile)
         }
-        return processDirectory(currentFile)
+        if (currentDepth == config.treeDepth) {
+            val lazyDir = TreeItem<FsNode>(FsNode.DirectoryNode(currentFile))
+            lazyDir.value.diskRoot = diskRoot
+            lazyDir.value.size = calcSize(currentFile)
+            val lazyNode: TreeItem<FsNode> = TreeItem(FsNode.LazyNode(currentFile))
+            lazyNode.value.diskRoot = diskRoot
+            lazyDir.children.add(lazyNode)
+            return lazyDir
+        }
+        return processDirectory(currentFile, currentDepth + 1)
     }
 
     private fun processSingleFile(currentFile: File): TreeItem<FsNode> {
@@ -50,7 +54,7 @@ class FsCrawler(val diskRoot: TreeItem<FsNode>, private val monitor: ProgressMon
 
     }
 
-    private fun processDirectory(currentFile: File): TreeItem<FsNode> {
+    private fun processDirectory(currentFile: File, currentDepth: Int): TreeItem<FsNode> {
         directoryCount++
         val files = currentFile.listFiles()
                 ?: throw IllegalStateException("current dir $currentFile returned null for listFiles")
@@ -62,7 +66,7 @@ class FsCrawler(val diskRoot: TreeItem<FsNode>, private val monitor: ProgressMon
 
         for (file in files) {
             try {
-                val node = recursiveScan(file)
+                val node = recursiveScan(file, currentDepth)
                 directoryNode.value.size += node.value.size
                 directoryNode.children.add(node)
             } catch (ex: Exception) {

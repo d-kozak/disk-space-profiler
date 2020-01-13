@@ -2,6 +2,7 @@ package io.dkozak.profiler.client.view.dialog
 
 import io.dkozak.profiler.client.view.ProgressView
 import io.dkozak.profiler.client.viewmodel.FileTreeViewModel
+import io.dkozak.profiler.scanner.ScanConfig
 import javafx.beans.property.SimpleIntegerProperty
 import javafx.beans.property.SimpleStringProperty
 import javafx.geometry.Pos
@@ -14,10 +15,10 @@ class StartAnalysisDialog : Fragment() {
 
     private val fileTreeViewModel: FileTreeViewModel by inject()
 
-    private val rootPathViewModel = ViewModel()
+    private val formViewModel = ViewModel()
 
-    private val rootDir = rootPathViewModel.bind { SimpleStringProperty("/") }
-    private val treeDepth = rootPathViewModel.bind { SimpleIntegerProperty(2) }
+    private val rootDir = formViewModel.bind { SimpleStringProperty("/") }
+    private val treeDepth = formViewModel.bind { SimpleIntegerProperty(ScanConfig.DEFAULT_TREE_DEPTH) }
 
 
     override val root: Parent = vbox {
@@ -81,10 +82,10 @@ class StartAnalysisDialog : Fragment() {
                                 }
                             }
                             button("Start") {
-                                enableWhen(rootPathViewModel.valid.and(status.running.not()))
+                                enableWhen(formViewModel.valid.and(status.running.not()))
                                 action {
                                     runAsync {
-                                        fileTreeViewModel.newScan(rootDir.value, this)
+                                        fileTreeViewModel.newScan(rootDir.value, ScanConfig(treeDepth.value.toInt()), this)
                                     } ui {
                                         close()
                                     }

@@ -6,6 +6,6 @@ import javafx.scene.control.TreeItem
 
 interface DiscScanner {
 
-    fun newScan(root: String, monitor: ProgressMonitor): TreeItem<FsNode>
-    fun partialScan(startNode: TreeItem<FsNode>, monitor: ProgressMonitor): TreeItem<FsNode>
+    fun newScan(root: String, config: ScanConfig, monitor: ProgressMonitor): TreeItem<FsNode>
+    fun partialScan(startNode: TreeItem<FsNode>, config: ScanConfig, monitor: ProgressMonitor): TreeItem<FsNode>
 }

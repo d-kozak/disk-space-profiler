@@ -33,6 +33,10 @@ sealed class FsNode(var file: File) {
         override fun toString(): String = "FileNode(${file.absolutePath})"
     }
 
+    class LazyNode(file: File) : FsNode(file) {
+        override fun toString(): String = "LazyNode(${file.absolutePath})"
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is FsNode) return false
