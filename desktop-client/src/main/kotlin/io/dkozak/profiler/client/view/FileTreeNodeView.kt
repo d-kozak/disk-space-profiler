@@ -15,7 +15,7 @@ class FileTreeNodeView : Fragment() {
         if (node.value is FsNode.DirectoryNode)
             imageview("folder.png")
         label(node.value.file.name)
-        label("${node.value.size}B")
+        label("${node.value.size}B ")
         progressbar {
             progress = spaceTaken
         }

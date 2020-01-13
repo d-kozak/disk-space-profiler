@@ -18,10 +18,8 @@ class FileTreeView : View() {
     override val root = treeview<FsNode> {
         root = fileTreeViewModel.fileTreeProperty.value
         cellFormat {
-            text = when (it) {
-                is FsNode.DirectoryNode -> it.file.name
-                is FsNode.FileNode -> it.file.name
-                else -> "unknown $it"
+            graphic = hbox {
+                this += find<FileTreeNodeView>(mapOf(FileTreeNodeView::node to treeItem))
             }
             onDoubleClick {
                 fileTreeViewModel.entrySelected(treeItem)

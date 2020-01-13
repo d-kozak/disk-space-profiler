@@ -22,6 +22,7 @@ class FsCrawler(val diskRoot: TreeItem<FsNode>, private val monitor: ProgressMon
         check(node.value is FsNode.DirectoryNode) { "node resulting from the scan is not a directory node" }
         node.value.root.value.occupiedSpace = node.value.size
         return diskRoot.apply {
+            this.value.diskRoot = node.value.diskRoot
             this.value.size = node.value.size
             this.children.addAll(node.children)
         }
