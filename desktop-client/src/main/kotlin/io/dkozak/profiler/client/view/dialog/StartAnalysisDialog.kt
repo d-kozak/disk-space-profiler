@@ -13,7 +13,10 @@ class StartAnalysisDialog : Fragment() {
 
     private val fileTreeViewModel: FileTreeViewModel by inject()
 
-    private val rootDir = SimpleStringProperty("/")
+    private val rootPathViewModel = ViewModel()
+
+    private val rootDir = rootPathViewModel.bind { SimpleStringProperty("/") }
+
 
     override val root: Parent = vbox {
         borderpane {
@@ -29,13 +32,20 @@ class StartAnalysisDialog : Fragment() {
                     alignment = Pos.CENTER
                     enableWhen(status.running.not())
                     label("Root directory: ")
-                    textfield(rootDir)
+                    textfield(rootDir).validator {
+                        val file = File(it)
+                        when {
+                            !file.exists() -> error("File does not exist")
+                            !file.isDirectory -> error("File is not a directory")
+                            else -> null
+                        }
+                    }
                     button("Select") {
                         action {
                             val initialDir = File(rootDir.value)
                             val dir = chooseDirectory("Select root directory", initialDirectory = if (initialDir.exists()) initialDir else null)
                             if (dir != null) {
-                                rootDir.set(dir.absolutePath)
+                                rootDir.value = dir.absolutePath
                             }
                         }
                     }
@@ -61,7 +71,7 @@ class StartAnalysisDialog : Fragment() {
                                 }
                             }
                             button("Start") {
-                                enableWhen(status.running.not())
+                                enableWhen(rootPathViewModel.valid.and(status.running.not()))
                                 action {
                                     runAsync {
                                         fileTreeViewModel.newScan(rootDir.value, this)
