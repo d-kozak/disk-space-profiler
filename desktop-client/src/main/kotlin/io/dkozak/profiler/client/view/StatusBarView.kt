@@ -28,7 +28,7 @@ class StatusBarView : View() {
     init {
         fileTreeViewModel.fileTreeProperty.onChange { root ->
             if (root != null)
-                diskInfoProperty.set("Used ${root.value.root.value.occupiedSpace} / ${root.value.root.value.spaceAvailable}")
+                diskInfoProperty.set("Used ${root.value.root.value.occupiedSpace} / ${root.value.totalSpace}")
         }
     }
 }

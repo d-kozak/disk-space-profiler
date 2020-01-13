@@ -20,7 +20,7 @@ class FileTreeNodeView : Fragment() {
 
             hbox(4) {
                 label(node.value.file.name)
-                if (node.parent != null && node.value.spaceTaken >= 0.1) {
+                if (node.value.spaceTaken >= 0.05) {
                     progressbar {
                         progress = node.value.spaceTaken
                         maxWidth = 50.0

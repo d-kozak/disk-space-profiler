@@ -25,7 +25,7 @@ class DirectoryNodeView : Fragment() {
                 hboxConstraints {
                     hGrow = Priority.ALWAYS
                 }
-                if (node.parent != null && node.value.spaceTaken >= 0.1)
+                if (node.value.spaceTaken >= 0.05)
                     progressbar {
                         progress = node.value.spaceTaken
                         style {

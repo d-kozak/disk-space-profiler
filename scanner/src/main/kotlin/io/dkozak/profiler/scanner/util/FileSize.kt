@@ -10,6 +10,10 @@ private val TERA = Math.pow(10.0, 12.0).toLong()
 
 private val numberFormat = DecimalFormat("#.00")
 
+fun Long.toFileSize() = FileSize(this)
+val Int.bytes
+    get() = FileSize(this.toLong())
+
 inline class FileSize(val bytes: Long = 0) : Comparable<FileSize> {
 
     override fun toString(): String = when {
