@@ -20,7 +20,11 @@ class FsCrawler(val diskRoot: TreeItem<FsNode>, private val monitor: ProgressMon
         monitor.message("scanning: ${diskRoot.value.file.name}")
         val node = recursiveScan(diskRoot.value.file)
         check(node.value is FsNode.DirectoryNode) { "node resulting from the scan is not a directory node" }
-        return diskRoot.apply { this.children.addAll(node.children) }
+        node.value.root.value.occupiedSpace = node.value.size
+        return diskRoot.apply {
+            this.value.size = node.value.size
+            this.children.addAll(node.children)
+        }
     }
 
     fun recursiveScan(currentFile: File): TreeItem<FsNode> {

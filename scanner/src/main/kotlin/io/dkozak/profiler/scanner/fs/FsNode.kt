@@ -6,8 +6,11 @@ import java.io.File
 
 
 sealed class FsNode(var file: File) {
-    lateinit var diskRoot: TreeItem<FsNode>
+    internal lateinit var diskRoot: TreeItem<FsNode>
     var size: Long = -1
+
+    val root: TreeItem<DiskRoot>
+        get() = diskRoot as TreeItem<DiskRoot>
 
     companion object {
         val DEFAULT_COMPARATOR = FsNodeComparator().reversed()
@@ -18,7 +21,8 @@ sealed class FsNode(var file: File) {
     }
 
     class DiskRoot(file: File) : DirectoryNode(file) {
-        var totalSpace = 0
+        var spaceAvailable = 0
+        var occupiedSpace: Long = 0
     }
 
     class FileNode(file: File) : FsNode(file) {

@@ -2,7 +2,6 @@ package io.dkozak.profiler.client.view
 
 import io.dkozak.profiler.client.view.dialog.DeleteFileDialog
 import io.dkozak.profiler.client.viewmodel.FileTreeViewModel
-import io.dkozak.profiler.scanner.fs.FsNode
 import javafx.scene.input.KeyCode
 import javafx.scene.layout.Priority
 import javafx.scene.text.FontWeight
@@ -39,17 +38,8 @@ class DirectoryView : View() {
 
             cellFormat {
                 graphic = hbox {
-                    when (it.value) {
-                        is FsNode.DirectoryNode -> {
-                            imageview("folder.png")
-                            label(it.value.file.name)
-                        }
-                        is FsNode.FileNode -> {
-                            label(it.value.file.name)
-                        }
-                    }
+                    this += find<FileTreeNodeView>(mapOf(FileTreeNodeView::node to it))
                 }
-
             }
 
             addEventFilter(javafx.scene.input.KeyEvent.KEY_PRESSED) { event ->
