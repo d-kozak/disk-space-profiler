@@ -7,8 +7,10 @@ import io.dkozak.profiler.scanner.fs.WindowsRoot
 import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.property.SimpleStringProperty
 import javafx.collections.FXCollections
+import mu.KotlinLogging
 import tornadofx.*
 
+private val logger = KotlinLogging.logger { }
 
 class FileTreeViewModel : ViewModel() {
     private val fileTreeModel: FileTreeModel by inject()
@@ -48,9 +50,7 @@ class FileTreeViewModel : ViewModel() {
                 selectedNodeNameProperty.set(node.file.name)
                 parentDirectoryProperty.set(node.parent)
             }
-            is FsNode.FileNode -> {
-                println("not supportted yet $node")
-            }
+            is FsNode.FileNode -> logger.warn { "native file open not supported (yet), results in nop" }
         }
     }
 

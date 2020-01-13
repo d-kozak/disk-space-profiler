@@ -69,7 +69,6 @@ class DirectoryView : View() {
             }
 
             contextmenu {
-                item("Open")
                 item("Refresh") {
                     action {
                         val rootItem = selectedItem ?: return@action
