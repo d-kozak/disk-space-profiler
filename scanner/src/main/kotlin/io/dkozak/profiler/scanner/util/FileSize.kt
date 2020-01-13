@@ -10,7 +10,7 @@ private val TERA = Math.pow(10.0, 12.0).toLong()
 
 private val numberFormat = DecimalFormat("#.00")
 
-inline class FileSize(val bytes: Long = 0) {
+inline class FileSize(val bytes: Long = 0) : Comparable<FileSize> {
 
     override fun toString(): String = when {
         bytes >= TERA -> toUnit(TERA, "TB")
@@ -19,6 +19,8 @@ inline class FileSize(val bytes: Long = 0) {
         bytes >= KILO -> toUnit(KILO, "KB")
         else -> "$bytes B"
     }
+
+    override fun compareTo(other: FileSize): Int = this.bytes.compareTo(other.bytes)
 
     fun relativeTo(other: FileSize): Double = this.bytes.toDouble() / other.bytes
 
