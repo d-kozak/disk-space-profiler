@@ -9,8 +9,13 @@ class RootView : View() {
         title = "Disk space analyzer"
         setPrefSize(800.0, 600.0)
         top<AppMenu>()
-        left<FileTreeView>()
-        center<DirectoryView>()
+        center {
+            splitpane {
+                add<FileTreeView>()
+                add<DirectoryView>()
+                setDividerPosition(0, 0.3)
+            }
+        }
         bottom<StatusBarView>()
     }
 
