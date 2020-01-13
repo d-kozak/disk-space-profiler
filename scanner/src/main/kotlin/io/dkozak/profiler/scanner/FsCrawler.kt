@@ -31,12 +31,17 @@ class FsCrawler(val diskRoot: TreeItem<FsNode>, private val config: ScanConfig, 
         monitor.message("ScanInfo: ${fileCount} files, ${directoryCount} directories, depth $currentDepth")
         check(currentFile.exists()) { "file ${currentFile.absolutePath} does not exist" }
         if (!currentFile.isDirectory) {
+            fileCount++
             return processSingleFile(currentFile)
         }
+        directoryCount++
         if (currentDepth == config.treeDepth) {
             val lazyDir = TreeItem<FsNode>(FsNode.DirectoryNode(currentFile))
             lazyDir.value.diskRoot = diskRoot
-            lazyDir.value.size = calcSize(currentFile)
+            val (subtreeSize, subtreeFileCount, subtreeDirectoryCount) = calcSize(currentFile)
+            lazyDir.value.size = subtreeSize
+            fileCount += subtreeFileCount
+            directoryCount += subtreeDirectoryCount
             val lazyNode: TreeItem<FsNode> = TreeItem(FsNode.LazyNode(currentFile))
             lazyNode.value.diskRoot = diskRoot
             lazyDir.children.add(lazyNode)
@@ -46,7 +51,6 @@ class FsCrawler(val diskRoot: TreeItem<FsNode>, private val config: ScanConfig, 
     }
 
     private fun processSingleFile(currentFile: File): TreeItem<FsNode> {
-        fileCount++
         return TreeItem(FsNode.FileNode(currentFile).apply {
             size = FileSize(currentFile.length())
             this.diskRoot = this@FsCrawler.diskRoot
@@ -55,7 +59,6 @@ class FsCrawler(val diskRoot: TreeItem<FsNode>, private val config: ScanConfig, 
     }
 
     private fun processDirectory(currentFile: File, currentDepth: Int): TreeItem<FsNode> {
-        directoryCount++
         val files = currentFile.listFiles()
                 ?: throw IllegalStateException("current dir $currentFile returned null for listFiles")
         val nodeInfo = FsNode.DirectoryNode(currentFile).apply {
