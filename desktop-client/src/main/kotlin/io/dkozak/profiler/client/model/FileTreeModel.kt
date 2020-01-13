@@ -20,8 +20,8 @@ class FileTreeModel : Controller() {
     val fileTreeProperty = SimpleObjectProperty<TreeItem<FsNode>>(this, "fileTree", null)
 
     fun newScan(rootDirectory: String, scanConfig: ScanConfig, task: FXTask<*>) {
-        val root = discScanner.newScan(rootDirectory, scanConfig, ProgressAdapter(task))
-        fire(MessageEvent("Scan of '$rootDirectory' finished"))
+        val (root, time) = discScanner.newScan(rootDirectory, scanConfig, ProgressAdapter(task))
+        fire(MessageEvent("Scan of '$rootDirectory' finished, it took ${time} ms"))
         logger.info { "new fstree $root" }
         onUiThread {
             fileTreeProperty.set(root)
@@ -30,7 +30,7 @@ class FileTreeModel : Controller() {
 
     fun partialScan(selectedNode: TreeItem<FsNode>, task: FXTask<*>): TreeItem<FsNode> {
         val parent = selectedNode.parent
-        val newTree = discScanner.partialScan(selectedNode, ScanConfig(), ProgressAdapter(task))
+        val (newTree, time) = discScanner.partialScan(selectedNode, ScanConfig(), ProgressAdapter(task))
         onUiThread {
             if (parent != null) {
                 selectedNode.removeFromParent()
@@ -40,7 +40,7 @@ class FileTreeModel : Controller() {
             } else {
                 fileTreeProperty.set(newTree)
             }
-            fire(MessageEvent("Rescan of '${selectedNode.value.file.absolutePath}' finished"))
+            fire(MessageEvent("Rescan of '${selectedNode.value.file.absolutePath}' finished, it took ${time} ms"))
         }
         return newTree
     }
