@@ -3,22 +3,19 @@ package io.dkozak.profiler.client.model
 import io.dkozak.profiler.client.util.ProgressAdapter
 import io.dkozak.profiler.client.util.onUiThread
 import io.dkozak.profiler.scanner.SimpleDiscScanner
-import io.dkozak.profiler.scanner.fs.DiskRoot
 import io.dkozak.profiler.scanner.fs.FsNode
 import io.dkozak.profiler.scanner.fs.FsRoot
 import javafx.beans.property.SimpleObjectProperty
 import mu.KotlinLogging
 import tornadofx.*
-import java.io.File
-
-val dummy = DiskRoot(File("."), FsNode.DirectoryNode(File("."), FsNode.FileNode(File("gradlew"))))
 
 private val logger = KotlinLogging.logger { }
+
 class FileTreeModel : Controller() {
 
     private val discScanner = SimpleDiscScanner()
 
-    val fileTreeProperty = SimpleObjectProperty<FsRoot>(this, "fileTree", dummy)
+    val fileTreeProperty = SimpleObjectProperty<FsRoot>(this, "fileTree", null)
 
     fun newScan(rootDirectory: String, task: FXTask<*>) {
         val root = discScanner.newScan(rootDirectory, ProgressAdapter(task))

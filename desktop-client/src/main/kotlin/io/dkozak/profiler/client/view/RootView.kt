@@ -1,5 +1,7 @@
 package io.dkozak.profiler.client.view
 
+import io.dkozak.profiler.client.view.dialog.StartAnalysisDialog
+import javafx.stage.StageStyle
 import tornadofx.*
 
 class RootView : View() {
@@ -10,5 +12,9 @@ class RootView : View() {
         left<FileTreeView>()
         center<DirectoryView>()
         bottom<StatusBarView>()
+    }
+
+    init {
+        find<StartAnalysisDialog>().openModal(stageStyle = StageStyle.UTILITY)
     }
 }
