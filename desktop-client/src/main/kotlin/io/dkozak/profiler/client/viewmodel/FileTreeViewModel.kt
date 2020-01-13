@@ -1,7 +1,9 @@
 package io.dkozak.profiler.client.viewmodel
 
 import io.dkozak.profiler.client.model.FileTreeModel
+import io.dkozak.profiler.scanner.fs.DiskRoot
 import io.dkozak.profiler.scanner.fs.FsNode
+import io.dkozak.profiler.scanner.fs.WindowsRoot
 import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.property.SimpleStringProperty
 import javafx.collections.FXCollections
@@ -17,6 +19,19 @@ class FileTreeViewModel : ViewModel() {
     val selectedNodeNameProperty = SimpleStringProperty(this, "selectedNodeName", "")
 
     val parentDirectoryProperty = SimpleObjectProperty<FsNode.DirectoryNode>(this, "parentDirectory", null)
+
+    init {
+        fileTreeProperty.onChange { node ->
+            when (node) {
+                is WindowsRoot -> {
+                    if (node.disks.isNotEmpty()) {
+                        entrySelected(node.disks.first().node)
+                    }
+                }
+                is DiskRoot -> entrySelected(node.node)
+            }
+        }
+    }
 
     fun newScan(rootDirectory: String, task: FXTask<*>) {
         fileTreeModel.newScan(rootDirectory, task)
