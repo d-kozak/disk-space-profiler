@@ -4,6 +4,8 @@ package io.dkozak.profiler.client.view
 import io.dkozak.profiler.client.view.dialog.DeleteFileDialog
 import io.dkozak.profiler.client.viewmodel.FileTreeViewModel
 import io.dkozak.profiler.scanner.fs.FsNode
+import io.dkozak.profiler.scanner.fs.FsNodeByNameComparator
+import io.dkozak.profiler.scanner.fs.FsNodeBySizeComparator
 import javafx.scene.input.KeyCode
 import javafx.stage.StageStyle
 import mu.KotlinLogging
@@ -41,6 +43,22 @@ class FileTreeView : View() {
                         node = node.parent ?: node
                     runAsync {
                         fileTreeViewModel.partialScan(node, this)
+                    }
+                }
+            }
+            menu("Sort") {
+                item("by name") {
+                    action {
+                        val item = selectionModel.selectedItems.firstOrNull()?.parent ?: return@action
+                        item.children.sortWith(FsNodeByNameComparator)
+                        item.value.comparator = FsNodeByNameComparator
+                    }
+                }
+                item("by size") {
+                    action {
+                        val item = selectionModel.selectedItems.firstOrNull()?.parent ?: return@action
+                        item.children.sortWith(FsNodeBySizeComparator)
+                        item.value.comparator = FsNodeBySizeComparator
                     }
                 }
             }

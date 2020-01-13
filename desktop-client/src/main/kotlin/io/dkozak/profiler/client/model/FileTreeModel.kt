@@ -34,7 +34,7 @@ class FileTreeModel : Controller() {
         onUiThread {
             if (parent != null) {
                 selectedNode.removeFromParent()
-                val toInsert = parent.children.binarySearch(newTree, FsNode.DEFAULT_COMPARATOR)
+                val toInsert = parent.children.binarySearch(newTree, parent.value.comparator)
                 check(toInsert < 0) { "node should NOT be in the tree right now" }
                 parent.children.add(-toInsert - 1, newTree)
             } else {

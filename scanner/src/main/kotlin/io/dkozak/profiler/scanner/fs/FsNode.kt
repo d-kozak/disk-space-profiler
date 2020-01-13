@@ -7,6 +7,8 @@ import java.io.File
 
 
 sealed class FsNode(var file: File) {
+    var comparator: Comparator<TreeItem<FsNode>> = DEFAULT_COMPARATOR
+
     internal lateinit var diskRoot: TreeItem<FsNode>
     var size = FileSize(0)
 
@@ -17,7 +19,7 @@ sealed class FsNode(var file: File) {
         get() = this.size.relativeTo(this.root.value.occupiedSpace)
 
     companion object {
-        val DEFAULT_COMPARATOR = FsNodeComparator().reversed()
+        val DEFAULT_COMPARATOR = FsNodeBySizeComparator
     }
 
     open class DirectoryNode(file: File) : FsNode(file) {

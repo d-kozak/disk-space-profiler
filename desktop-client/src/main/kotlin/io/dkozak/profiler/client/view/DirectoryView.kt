@@ -3,6 +3,8 @@ package io.dkozak.profiler.client.view
 import io.dkozak.profiler.client.view.dialog.DeleteFileDialog
 import io.dkozak.profiler.client.viewmodel.FileTreeViewModel
 import io.dkozak.profiler.scanner.fs.FsNode
+import io.dkozak.profiler.scanner.fs.FsNodeByNameComparator
+import io.dkozak.profiler.scanner.fs.FsNodeBySizeComparator
 import javafx.scene.input.KeyCode
 import javafx.scene.layout.Priority
 import javafx.scene.text.FontWeight
@@ -74,6 +76,24 @@ class DirectoryView : View() {
                             fileTreeViewModel.partialScan(node, this)
                         }
 
+                    }
+                }
+                menu("Sort") {
+                    item("by name") {
+                        action {
+                            val item = selectedItem?.parent ?: return@action
+                            item.children.sortWith(FsNodeByNameComparator)
+                            item.value.comparator = FsNodeByNameComparator
+                            fileTreeViewModel.selectedNodeContentProperty.setAll(item.children)
+                        }
+                    }
+                    item("by size") {
+                        action {
+                            val item = selectedItem?.parent ?: return@action
+                            item.children.sortWith(FsNodeBySizeComparator)
+                            item.value.comparator = FsNodeBySizeComparator
+                            fileTreeViewModel.selectedNodeContentProperty.setAll(item.children)
+                        }
                     }
                 }
                 item("Delete") {

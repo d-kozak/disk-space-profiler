@@ -77,7 +77,7 @@ class FsCrawler(val diskRoot: TreeItem<FsNode>, private val config: ScanConfig, 
             }
 
         }
-        directoryNode.children.sortWith(FsNode.DEFAULT_COMPARATOR)
+        directoryNode.children.sortWith(directoryNode.value.comparator)
         return directoryNode
     }
 
