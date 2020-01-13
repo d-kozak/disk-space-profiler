@@ -26,7 +26,7 @@ class FileTreeNodeView : Fragment() {
                     }
                 }
             }
-            label("${node.value.size}B ")
+            label(node.value.size.toString())
         }
 
     }

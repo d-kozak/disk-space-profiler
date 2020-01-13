@@ -1,19 +1,20 @@
 package io.dkozak.profiler.scanner.fs
 
 
+import io.dkozak.profiler.scanner.util.FileSize
 import javafx.scene.control.TreeItem
 import java.io.File
 
 
 sealed class FsNode(var file: File) {
     internal lateinit var diskRoot: TreeItem<FsNode>
-    var size: Long = -1
+    var size = FileSize(0)
 
     val root: TreeItem<DiskRoot>
         get() = diskRoot as TreeItem<DiskRoot>
 
     val spaceTaken: Double
-        get() = this.size.toDouble() / this.root.value.occupiedSpace
+        get() = this.size.relativeTo(this.root.value.occupiedSpace)
 
     companion object {
         val DEFAULT_COMPARATOR = FsNodeComparator().reversed()
@@ -24,8 +25,8 @@ sealed class FsNode(var file: File) {
     }
 
     class DiskRoot(file: File) : DirectoryNode(file) {
-        var spaceAvailable = 0
-        var occupiedSpace: Long = 0
+        var spaceAvailable = FileSize(0)
+        var occupiedSpace = FileSize(0)
     }
 
     class FileNode(file: File) : FsNode(file) {

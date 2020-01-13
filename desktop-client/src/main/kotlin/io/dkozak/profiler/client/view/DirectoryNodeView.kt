@@ -29,7 +29,7 @@ class DirectoryNodeView : Fragment() {
                         accentColor = spaceColor(node.value.spaceTaken)
                     }
                 }
-            label("${node.value.size}B ")
+            label(node.value.size.toString())
         }
 
 

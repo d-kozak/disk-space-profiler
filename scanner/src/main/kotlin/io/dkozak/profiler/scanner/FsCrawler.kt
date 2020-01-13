@@ -1,6 +1,7 @@
 package io.dkozak.profiler.scanner
 
 import io.dkozak.profiler.scanner.fs.FsNode
+import io.dkozak.profiler.scanner.util.FileSize
 import io.dkozak.profiler.scanner.util.ProgressMonitor
 import javafx.scene.control.TreeItem
 import java.io.File
@@ -39,7 +40,7 @@ class FsCrawler(val diskRoot: TreeItem<FsNode>, private val monitor: ProgressMon
 
     private fun processSingleFile(currentFile: File): TreeItem<FsNode> =
             TreeItem(FsNode.FileNode(currentFile).apply {
-                size = currentFile.length()
+                size = FileSize(currentFile.length())
                 this.diskRoot = this@FsCrawler.diskRoot
             })
 
