@@ -41,10 +41,11 @@ class DirectoryView : View() {
                 graphic = hbox {
                     when (it) {
                         is FsNode.DirectoryNode -> {
-                            label("dir ${it.file.name}")
+                            imageview("folder.png")
+                            label(it.file.name)
                         }
                         is FsNode.FileNode -> {
-                            label("file ${it.file.name}")
+                            label(it.file.name)
                         }
                     }
                 }
