@@ -2,6 +2,7 @@ package io.dkozak.profiler.client.view.dialog
 
 import io.dkozak.profiler.client.view.ProgressView
 import io.dkozak.profiler.client.viewmodel.FileTreeViewModel
+import javafx.beans.property.SimpleIntegerProperty
 import javafx.beans.property.SimpleStringProperty
 import javafx.geometry.Pos
 import javafx.scene.Parent
@@ -16,11 +17,12 @@ class StartAnalysisDialog : Fragment() {
     private val rootPathViewModel = ViewModel()
 
     private val rootDir = rootPathViewModel.bind { SimpleStringProperty("/") }
+    private val treeDepth = rootPathViewModel.bind { SimpleIntegerProperty(2) }
 
 
     override val root: Parent = vbox {
         borderpane {
-            title = "Analysis configuration"
+            title = "Run analysis"
             setPrefSize(400.0, 100.0)
 
             style {
@@ -28,28 +30,36 @@ class StartAnalysisDialog : Fragment() {
             }
 
             center {
-                vbox(4) {
-                    alignment = Pos.CENTER
-                    enableWhen(status.running.not())
-                    label("Root directory: ")
-                    textfield(rootDir).validator {
-                        val file = File(it)
-                        when {
-                            !file.exists() -> error("File does not exist")
-                            !file.isDirectory -> error("File is not a directory")
-                            else -> null
+                form {
+                    fieldset("Analysis configuration") {
+                        enableWhen(status.running.not())
+
+                        field("Root directory") {
+                            textfield(rootDir).validator {
+                                val file = File(it)
+                                when {
+                                    !file.exists() -> error("File does not exist")
+                                    !file.isDirectory -> error("File is not a directory")
+                                    else -> null
+                                }
+                            }
+                            button("Select") {
+                                action {
+                                    val initialDir = File(rootDir.value)
+                                    val dir = chooseDirectory("Select root directory", initialDirectory = if (initialDir.exists()) initialDir else null)
+                                    if (dir != null) {
+                                        rootDir.value = dir.absolutePath
+                                    }
+                                }
+                            }
                         }
-                    }
-                    button("Select") {
-                        action {
-                            val initialDir = File(rootDir.value)
-                            val dir = chooseDirectory("Select root directory", initialDirectory = if (initialDir.exists()) initialDir else null)
-                            if (dir != null) {
-                                rootDir.value = dir.absolutePath
+
+                        field("Tree depth") {
+                            textfield(treeDepth).validator {
+                                if (it?.toIntOrNull() != null) null else error("Integer expected")
                             }
                         }
                     }
-
                 }
             }
 
