@@ -15,11 +15,20 @@ class DeleteFileDialog : Fragment() {
 
     override val root: Parent = borderpane {
         title = "Delete ${if (node.value.file.isDirectory) "directory" else "file"} ${node.value.file.name}"
+
+        style {
+            padding = box(5.px)
+        }
+
         center {
-            label("Are you sure that you want to delete ${if (node.value.file.isDirectory) "directory" else "file"} ${node.value.file.name}")
+            label("Are you sure that you want to delete ${if (node.value.file.isDirectory) "directory" else "file"} ${node.value.file.name}") {
+                style {
+                    padding = box(10.px)
+                }
+            }
         }
         bottom {
-            hbox {
+            hbox(4) {
                 alignment = Pos.CENTER_RIGHT
                 button("Cancel") {
                     action {

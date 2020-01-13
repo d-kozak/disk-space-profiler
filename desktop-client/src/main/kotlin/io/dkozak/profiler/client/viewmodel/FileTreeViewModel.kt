@@ -24,8 +24,8 @@ class FileTreeViewModel : ViewModel() {
 
     init {
         fileTreeProperty.onChange { node ->
-            if (node != null && node.children.isNotEmpty())
-                entrySelected(node.children.first())
+            if (node != null)
+                entrySelected(node)
         }
     }
 

@@ -17,6 +17,9 @@ class FsCrawler(val diskRoot: TreeItem<FsNode>, private val monitor: ProgressMon
 
     val errorMessages = mutableListOf<String>()
 
+    var fileCount = 0
+    var directoryCount = 0
+
     fun crawl(): TreeItem<FsNode> {
         monitor.message("scanning: ${diskRoot.value.file.name}")
         val node = recursiveScan(diskRoot.value.file)
@@ -30,7 +33,7 @@ class FsCrawler(val diskRoot: TreeItem<FsNode>, private val monitor: ProgressMon
     }
 
     fun recursiveScan(currentFile: File): TreeItem<FsNode> {
-        monitor.message("File: ${currentFile.name}")
+        monitor.message("ScanInfo: ${fileCount} files, ${directoryCount} directories")
         check(currentFile.exists()) { "file ${currentFile.absolutePath} does not exist" }
         if (!currentFile.isDirectory) {
             return processSingleFile(currentFile)
@@ -38,14 +41,17 @@ class FsCrawler(val diskRoot: TreeItem<FsNode>, private val monitor: ProgressMon
         return processDirectory(currentFile)
     }
 
-    private fun processSingleFile(currentFile: File): TreeItem<FsNode> =
-            TreeItem(FsNode.FileNode(currentFile).apply {
-                size = FileSize(currentFile.length())
-                this.diskRoot = this@FsCrawler.diskRoot
-            })
+    private fun processSingleFile(currentFile: File): TreeItem<FsNode> {
+        fileCount++
+        return TreeItem(FsNode.FileNode(currentFile).apply {
+            size = FileSize(currentFile.length())
+            this.diskRoot = this@FsCrawler.diskRoot
+        })
 
+    }
 
     private fun processDirectory(currentFile: File): TreeItem<FsNode> {
+        directoryCount++
         val files = currentFile.listFiles()
                 ?: throw IllegalStateException("current dir $currentFile returned null for listFiles")
         val nodeInfo = FsNode.DirectoryNode(currentFile).apply {

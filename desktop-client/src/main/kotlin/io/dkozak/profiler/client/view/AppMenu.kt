@@ -1,5 +1,7 @@
 package io.dkozak.profiler.client.view
 
+import io.dkozak.profiler.client.view.dialog.AboutDialog
+import io.dkozak.profiler.client.view.dialog.InstructionsDialog
 import io.dkozak.profiler.client.view.dialog.StartAnalysisDialog
 import javafx.scene.Parent
 import javafx.stage.StageStyle
@@ -15,8 +17,16 @@ class AppMenu : View() {
             }
         }
         menu("Help") {
-            item("Intructions")
-            item("About")
+            item("Instructions") {
+                action {
+                    find<InstructionsDialog>().openModal(stageStyle = StageStyle.UTILITY)
+                }
+            }
+            item("About") {
+                action {
+                    find<AboutDialog>().openModal(stageStyle = StageStyle.UTILITY)
+                }
+            }
         }
     }
 }

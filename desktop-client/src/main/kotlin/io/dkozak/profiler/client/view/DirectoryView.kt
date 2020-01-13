@@ -15,7 +15,8 @@ class DirectoryView : View() {
     override val root = vbox {
         borderpane {
             left {
-                button("<=") {
+                button {
+                    graphic = imageview("back.png")
                     enableWhen(fileTreeViewModel.selectedNodeParentProperty.isNotNull)
                     action {
                         fileTreeViewModel.goToParent()

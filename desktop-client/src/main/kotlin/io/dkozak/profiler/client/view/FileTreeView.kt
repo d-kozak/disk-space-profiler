@@ -57,6 +57,8 @@ class FileTreeView : View() {
     init {
         fileTreeViewModel.fileTreeProperty.onChange {
             val fileTree = it ?: return@onChange
+            if (fileTree.children.isNotEmpty())
+                fileTree.isExpanded = true
             root.rootProperty().set(fileTree)
             root.refresh()
         }

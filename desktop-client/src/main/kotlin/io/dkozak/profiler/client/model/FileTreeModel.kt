@@ -39,6 +39,7 @@ class FileTreeModel : Controller() {
             return false
         }
         node.removeFromParent()
+        fire(MessageEvent("${if (node.value is FsNode.DirectoryNode) "Directory" else "File"} ${node.value.file.name} deleted"))
         return true
     }
 }

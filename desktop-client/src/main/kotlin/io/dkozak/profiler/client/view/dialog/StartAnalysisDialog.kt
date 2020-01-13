@@ -45,9 +45,11 @@ class StartAnalysisDialog : Fragment() {
 
             bottom {
                 borderpane {
-                    left<ProgressView>()
+                    left {
+                        add<ProgressView>(ProgressView::showMessage to false)
+                    }
                     right {
-                        hbox {
+                        hbox(4) {
                             alignment = Pos.BOTTOM_RIGHT
                             button("Cancel") {
                                 action {
