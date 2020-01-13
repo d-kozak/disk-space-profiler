@@ -1,11 +1,11 @@
 package io.dkozak.profiler.scanner
 
-import io.dkozak.profiler.scanner.fs.DiskRoot
 import io.dkozak.profiler.scanner.fs.FsNode
 import io.dkozak.profiler.scanner.util.ProgressMonitor
+import javafx.scene.control.TreeItem
 
 interface DiscScanner {
 
-    fun newScan(root: String, monitor: ProgressMonitor): DiskRoot
-    fun partialScan(startNode: FsNode, monitor: ProgressMonitor): FsNode
+    fun newScan(root: String, monitor: ProgressMonitor): TreeItem<FsNode>
+    fun partialScan(startNode: TreeItem<FsNode>, monitor: ProgressMonitor): TreeItem<FsNode>
 }

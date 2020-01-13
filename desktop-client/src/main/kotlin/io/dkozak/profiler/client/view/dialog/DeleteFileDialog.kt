@@ -1,22 +1,22 @@
 package io.dkozak.profiler.client.view.dialog
 
 
-import io.dkozak.profiler.client.event.FileDeletedEvent
+import io.dkozak.profiler.client.viewmodel.FileTreeViewModel
 import io.dkozak.profiler.scanner.fs.FsNode
 import javafx.geometry.Pos
 import javafx.scene.Parent
-import mu.KotlinLogging
+import javafx.scene.control.TreeItem
 import tornadofx.*
 
-private val logger = KotlinLogging.logger { }
-
 class DeleteFileDialog : Fragment() {
-    val node: FsNode by param()
+    val node: TreeItem<FsNode> by param()
+
+    val fileTreeViewModel: FileTreeViewModel by inject()
 
     override val root: Parent = borderpane {
-        title = "Delete ${if (node.file.isDirectory) "directory" else "file"} ${node.file.name}"
+        title = "Delete ${if (node.value.file.isDirectory) "directory" else "file"} ${node.value.file.name}"
         center {
-            label("Are you sure that you want to delete ${if (node.file.isDirectory) "directory" else "file"} ${node.file.name}")
+            label("Are you sure that you want to delete ${if (node.value.file.isDirectory) "directory" else "file"} ${node.value.file.name}")
         }
         bottom {
             hbox {
@@ -28,11 +28,7 @@ class DeleteFileDialog : Fragment() {
                 }
                 button("Delete") {
                     action {
-                        if (!node.file.deleteRecursively()) {
-                            logger.warn { "failed to delete file ${node.file.absolutePath}" }
-                        } else {
-                            fire(FileDeletedEvent(node))
-                        }
+                        fileTreeViewModel.removeNode(node)
                         close()
                     }
                 }

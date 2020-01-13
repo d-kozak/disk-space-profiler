@@ -17,7 +17,7 @@ class DirectoryView : View() {
         borderpane {
             left {
                 button("<=") {
-                    enableWhen(fileTreeViewModel.parentDirectoryProperty.isNotNull)
+                    enableWhen(fileTreeViewModel.selectedNodeParentProperty.isNotNull)
                     action {
                         fileTreeViewModel.goToParent()
                     }
@@ -39,13 +39,13 @@ class DirectoryView : View() {
 
             cellFormat {
                 graphic = hbox {
-                    when (it) {
+                    when (it.value) {
                         is FsNode.DirectoryNode -> {
                             imageview("folder.png")
-                            label(it.file.name)
+                            label(it.value.file.name)
                         }
                         is FsNode.FileNode -> {
-                            label(it.file.name)
+                            label(it.value.file.name)
                         }
                     }
                 }

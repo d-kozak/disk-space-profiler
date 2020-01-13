@@ -1,13 +1,12 @@
 package io.dkozak.profiler.client.model
 
-import io.dkozak.profiler.client.event.FileDeletedEvent
 import io.dkozak.profiler.client.event.MessageEvent
 import io.dkozak.profiler.client.util.ProgressAdapter
 import io.dkozak.profiler.client.util.onUiThread
 import io.dkozak.profiler.scanner.SimpleDiscScanner
 import io.dkozak.profiler.scanner.fs.FsNode
-import io.dkozak.profiler.scanner.fs.FsRoot
 import javafx.beans.property.SimpleObjectProperty
+import javafx.scene.control.TreeItem
 import mu.KotlinLogging
 import tornadofx.*
 
@@ -17,21 +16,7 @@ class FileTreeModel : Controller() {
 
     private val discScanner = SimpleDiscScanner()
 
-    val fileTreeProperty = SimpleObjectProperty<FsRoot>(this, "fileTree", null)
-
-    init {
-        subscribe<FileDeletedEvent> { event ->
-            val parent = event.node.parent
-            val currentRoot = fileTreeProperty.get() ?: return@subscribe
-            if (parent != null) {
-                if (!parent.files.remove(event.node)) {
-                    logger.warn { "could not remove node $event.node, internal representation will be outdated now" }
-                } else {
-                    fileTreeProperty.set(currentRoot)
-                }
-            }
-        }
-    }
+    val fileTreeProperty = SimpleObjectProperty<TreeItem<FsNode>>(this, "fileTree", null)
 
     fun newScan(rootDirectory: String, task: FXTask<*>) {
         val root = discScanner.newScan(rootDirectory, ProgressAdapter(task))
@@ -42,8 +27,18 @@ class FileTreeModel : Controller() {
         }
     }
 
-    fun partialScan(selectedNode: FsNode, task: FXTask<*>) {
-        discScanner.partialScan(selectedNode, ProgressAdapter(task))
-        fire(MessageEvent("Rescan of '${selectedNode.file.absolutePath}' finished"))
+    fun partialScan(selectedNode: TreeItem<FsNode>, task: FXTask<*>) {
+        TODO("not finished")
+//        discScanner.partialScan(selectedNode, ProgressAdapter(task))
+//        fire(MessageEvent("Rescan of '${selectedNode.file.absolutePath}' finished"))
+    }
+
+    fun removeNode(node: TreeItem<FsNode>): Boolean {
+        if (!node.value.file.deleteRecursively()) {
+            logger.warn { "failed to delete file ${node.value.file.absolutePath}" }
+            return false
+        }
+        node.removeFromParent()
+        return true
     }
 }

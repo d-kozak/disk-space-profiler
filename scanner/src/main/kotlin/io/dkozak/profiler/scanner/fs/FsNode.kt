@@ -1,21 +1,23 @@
 package io.dkozak.profiler.scanner.fs
 
+
+import javafx.scene.control.TreeItem
 import java.io.File
 
 sealed class FsNode(var file: File) {
-    var parent: DirectoryNode? = null
-    lateinit var disk: DiskRoot
+    lateinit var diskRoot: TreeItem<FsNode>
     var size: Long = -1
 
-    class DirectoryNode(file: File, val files: MutableList<FsNode>) : FsNode(file) {
-        constructor(file: File, vararg files: FsNode) : this(file, files.toMutableList())
+    open class DirectoryNode(file: File) : FsNode(file) {
+        override fun toString(): String = "DirectoryNode(${file.absolutePath})"
+    }
 
-        override fun toString(): String = "DirectoryNode(file=$file,files=$files)"
-
+    class DiskRoot(file: File) : DirectoryNode(file) {
+        var totalSpace = 0
     }
 
     class FileNode(file: File) : FsNode(file) {
-        override fun toString(): String = "FileNode(file=$file)"
+        override fun toString(): String = "FileNode(${file.absolutePath})"
     }
 
     override fun equals(other: Any?): Boolean {

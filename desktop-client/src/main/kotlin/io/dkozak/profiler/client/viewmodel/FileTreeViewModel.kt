@@ -1,12 +1,11 @@
 package io.dkozak.profiler.client.viewmodel
 
 import io.dkozak.profiler.client.model.FileTreeModel
-import io.dkozak.profiler.scanner.fs.DiskRoot
 import io.dkozak.profiler.scanner.fs.FsNode
-import io.dkozak.profiler.scanner.fs.WindowsRoot
 import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.property.SimpleStringProperty
 import javafx.collections.FXCollections
+import javafx.scene.control.TreeItem
 import mu.KotlinLogging
 import tornadofx.*
 
@@ -17,21 +16,16 @@ class FileTreeViewModel : ViewModel() {
 
     val fileTreeProperty = fileTreeModel.fileTreeProperty
 
-    val selectedNodeContentProperty = FXCollections.observableArrayList<FsNode>()
+    val selectedNodeContentProperty = FXCollections.observableArrayList<TreeItem<FsNode>>()
     val selectedNodeNameProperty = SimpleStringProperty(this, "selectedNodeName", "")
+    val selectedNodeParentProperty = SimpleObjectProperty<TreeItem<FsNode>>(this, "selectedNodeParent", null)
 
-    val parentDirectoryProperty = SimpleObjectProperty<FsNode.DirectoryNode>(this, "parentDirectory", null)
+    val selectedNodeProperty = SimpleObjectProperty<TreeItem<FsNode>>(this, "selectedNode", null)
 
     init {
         fileTreeProperty.onChange { node ->
-            when (node) {
-                is WindowsRoot -> {
-                    if (node.disks.isNotEmpty()) {
-                        entrySelected(node.disks.first().node)
-                    }
-                }
-                is DiskRoot -> entrySelected(node.node)
-            }
+            if (node != null && node.children.isNotEmpty())
+                entrySelected(node.children.first())
         }
     }
 
@@ -39,23 +33,45 @@ class FileTreeViewModel : ViewModel() {
         fileTreeModel.newScan(rootDirectory, task)
     }
 
-    fun partialScan(selectedNode: FsNode, task: FXTask<*>) {
+    fun partialScan(selectedNode: TreeItem<FsNode>, task: FXTask<*>) {
         fileTreeModel.partialScan(selectedNode, task)
     }
 
-    fun entrySelected(node: FsNode) {
-        when (node) {
+    fun entrySelected(node: TreeItem<FsNode>) {
+        when (val nodeInfo = node.value) {
             is FsNode.DirectoryNode -> {
-                selectedNodeContentProperty.setAll(node.files)
-                selectedNodeNameProperty.set(node.file.name)
-                parentDirectoryProperty.set(node.parent)
+                selectedNodeContentProperty.setAll(node.children)
+                selectedNodeParentProperty.set(node.parent)
+                selectedNodeNameProperty.set(node.value.file.name)
+                selectedNodeProperty.set(node)
             }
             is FsNode.FileNode -> logger.warn { "native file open not supported (yet), results in nop" }
         }
     }
 
     fun goToParent() {
-        val parent = parentDirectoryProperty.get() ?: return
-        entrySelected(parent)
+        val parent = selectedNodeParentProperty.get()
+        if (parent != null)
+            entrySelected(parent)
+        else logger.warn { "currently selected node has no parent" }
+    }
+
+    fun removeNode(node: TreeItem<FsNode>) {
+        val removingThisDirectory = selectedNodeProperty.get() == node
+        val removingChild = node in selectedNodeContentProperty
+        if (fileTreeModel.removeNode(node)) {
+            if (removingThisDirectory) {
+                val parent = selectedNodeParentProperty.get()
+                if (parent != null) {
+                    entrySelected(parent)
+                } else {
+                    selectedNodeNameProperty.set("")
+                    selectedNodeParentProperty.set(null)
+                    selectedNodeContentProperty.clear()
+                }
+            } else if (removingChild) {
+                selectedNodeContentProperty.remove(node)
+            }
+        }
     }
 }
