@@ -28,9 +28,19 @@ class FileTreeModel : Controller() {
     }
 
     fun partialScan(selectedNode: TreeItem<FsNode>, task: FXTask<*>) {
-        TODO("not finished")
-//        discScanner.partialScan(selectedNode, ProgressAdapter(task))
-//        fire(MessageEvent("Rescan of '${selectedNode.file.absolutePath}' finished"))
+        val parent = selectedNode.parent
+        val newTree = discScanner.partialScan(selectedNode, ProgressAdapter(task))
+        onUiThread {
+            if (parent != null) {
+                selectedNode.removeFromParent()
+                val toInsert = parent.children.binarySearch(newTree, FsNode.DEFAULT_COMPARATOR)
+                check(toInsert < 0) { "node should NOT be in the tree right now" }
+                parent.children.add(-toInsert - 1, newTree)
+            } else {
+                fileTreeProperty.set(newTree)
+            }
+            fire(MessageEvent("Rescan of '${selectedNode.value.file.absolutePath}' finished"))
+        }
     }
 
     fun removeNode(node: TreeItem<FsNode>): Boolean {
