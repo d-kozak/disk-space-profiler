@@ -61,6 +61,7 @@ class FsCrawler(val diskRoot: TreeItem<FsNode>, private val monitor: ProgressMon
             }
 
         }
+        directoryNode.children.sortWith(FsNode.DEFAULT_COMPARATOR)
         return directoryNode
     }
 

@@ -4,9 +4,14 @@ package io.dkozak.profiler.scanner.fs
 import javafx.scene.control.TreeItem
 import java.io.File
 
+
 sealed class FsNode(var file: File) {
     lateinit var diskRoot: TreeItem<FsNode>
     var size: Long = -1
+
+    companion object {
+        val DEFAULT_COMPARATOR = FsNodeComparator().reversed()
+    }
 
     open class DirectoryNode(file: File) : FsNode(file) {
         override fun toString(): String = "DirectoryNode(${file.absolutePath})"
