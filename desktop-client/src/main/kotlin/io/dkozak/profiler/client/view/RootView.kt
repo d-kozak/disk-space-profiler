@@ -10,7 +10,7 @@ import tornadofx.*
 class RootView : View() {
     override val root = borderpane {
         title = "Disk space analyzer"
-        setPrefSize(800.0, 600.0)
+        setPrefSize(1000.0, 600.0)
         top<AppMenu>()
         center {
             splitpane {
