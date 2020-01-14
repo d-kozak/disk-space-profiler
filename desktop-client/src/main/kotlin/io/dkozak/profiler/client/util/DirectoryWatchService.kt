@@ -16,7 +16,7 @@ private val logger = KotlinLogging.logger { }
 
 /**
  * Watches a gives directory for changes,
- * executes callbacks back to the FileTreeViewModel.
+ * executes callbacks methods back to the FileTreeViewModel when a change is detected.
  * @see FileTreeViewModel
  */
 class DirectoryWatchService(private val fileTreeViewModel: FileTreeViewModel) : CoroutineScope by CoroutineScope(Dispatchers.Default) {

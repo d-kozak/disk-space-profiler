@@ -6,6 +6,7 @@ import io.dkozak.profiler.client.util.onUiThread
 import io.dkozak.profiler.scanner.ScanConfig
 import io.dkozak.profiler.scanner.fs.FsNode
 import io.dkozak.profiler.scanner.fs.insertSorted
+import io.dkozak.profiler.scanner.fs.propagateSizeUp
 import io.dkozak.profiler.scanner.fs.removeSelfFromTree
 import io.dkozak.profiler.scanner.util.BackgroundThread
 import io.dkozak.profiler.scanner.util.toFileSize
@@ -14,10 +15,7 @@ import javafx.beans.property.SimpleStringProperty
 import javafx.collections.FXCollections
 import javafx.scene.control.TreeItem
 import mu.KotlinLogging
-import tornadofx.FXTask
-import tornadofx.ViewModel
-import tornadofx.invalidate
-import tornadofx.onChange
+import tornadofx.*
 import java.io.File
 
 private val logger = KotlinLogging.logger { }
@@ -131,31 +129,30 @@ class FileTreeViewModel : ViewModel() {
     }
 
 
-    fun onFileCreated(file: File) {
+    fun onFileCreated(file: File) = onUiThread {
         logger.info { "File created ${file.absolutePath}" }
         val parent = directoryProperty.get()
         if (parent == null) {
             logger.warn { "No node selected, cannot insert" }
-            return
+            return@onUiThread
         }
         parent.insertSorted(file)
         directoryContent.setAll(parent.children)
     }
 
-    fun onFileModified(file: File) {
+    fun onFileModified(file: File) = onUiThread {
         logger.info { "File modified ${file.absolutePath}" }
-        val correspondingNode = locateNodeFor(file) ?: return
+        val correspondingNode = locateNodeFor(file) ?: return@onUiThread
         if (correspondingNode.value is FsNode.FileNode) {
-
-            correspondingNode.value.size = file.length().toFileSize()
             correspondingNode.parent?.children?.invalidate()
             directoryContent.invalidate()
+            correspondingNode.propagateSizeUp(file.length().toFileSize() - correspondingNode.value.size)
         }
     }
 
-    fun onFileDeleted(file: File) {
+    fun onFileDeleted(file: File) = onUiThread {
         logger.info { "File deleted ${file.absolutePath}" }
-        val correspondingNode = locateNodeFor(file) ?: return
+        val correspondingNode = locateNodeFor(file) ?: return@onUiThread
         correspondingNode.removeSelfFromTree()
         directoryContent.remove(correspondingNode)
     }
