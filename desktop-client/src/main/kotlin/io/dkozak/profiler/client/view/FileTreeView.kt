@@ -6,6 +6,7 @@ import io.dkozak.profiler.client.viewmodel.FileTreeViewModel
 import io.dkozak.profiler.scanner.fs.FsNode
 import io.dkozak.profiler.scanner.fs.FsNodeByNameComparator
 import io.dkozak.profiler.scanner.fs.FsNodeBySizeComparator
+import io.dkozak.profiler.scanner.fs.isLazy
 import javafx.scene.input.KeyCode
 import javafx.stage.StageStyle
 import mu.KotlinLogging
@@ -31,21 +32,24 @@ class FileTreeView : View() {
         }
 
         addEventFilter(javafx.scene.input.KeyEvent.KEY_PRESSED) { event ->
-            if ((event.code == KeyCode.ENTER) && !event.isMetaDown && this.selectionModel.selectedItems.size == 1) {
+            if (!event.isMetaDown && this.selectionModel.selectedItems.size == 1) {
                 val node = this.selectionModel.selectedItems[0]
-                node.expandedProperty().set(true)
-                fileTreeViewModel.openDirectory(node)
+                when (event.code) {
+                    KeyCode.ENTER -> {
+                        node.expandedProperty().set(true)
+                        fileTreeViewModel.openDirectory(node)
+                    }
+                    KeyCode.DELETE -> find<DeleteFileDialog>(mapOf(DeleteFileDialog::fileToDelete to node)).openModal(stageStyle = StageStyle.UTILITY)
+                }
             }
         }
 
         contextmenu {
             item("Refresh") {
                 action {
-                    var node = selectionModel.selectedItems.firstOrNull() ?: return@action
-                    if (node.value is FsNode.LazyNode)
-                        node = node.parent ?: node
+                    val node = selectionModel.selectedItems.firstOrNull() ?: return@action
                     runAsync {
-                        fileTreeViewModel.rescanFrom(node, this)
+                        fileTreeViewModel.rescanFrom(if (node.isLazy) node.parent else node, this)
                     }
                 }
             }

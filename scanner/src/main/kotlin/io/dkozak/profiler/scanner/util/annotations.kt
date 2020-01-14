@@ -4,9 +4,10 @@ package io.dkozak.profiler.scanner.util
  * Denotes a piece a code that should be refactored.
  */
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION, AnnotationTarget.FIELD,
-        AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.EXPRESSION)
+        AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.EXPRESSION, AnnotationTarget.PROPERTY)
 @Retention(AnnotationRetention.SOURCE)
 @MustBeDocumented
+@Repeatable
 annotation class Cleanup(val text: String)
 
 
@@ -14,9 +15,10 @@ annotation class Cleanup(val text: String)
  * Denotes an invariant that should hold for a given piece of code
  */
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION, AnnotationTarget.FIELD,
-        AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.EXPRESSION)
+        AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.EXPRESSION, AnnotationTarget.PROPERTY)
 @Retention(AnnotationRetention.SOURCE)
 @MustBeDocumented
+@Repeatable
 annotation class Invariant(val text: String)
 
 /**
@@ -25,6 +27,7 @@ annotation class Invariant(val text: String)
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.CONSTRUCTOR, AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.SOURCE)
 @MustBeDocumented
+@Repeatable
 annotation class Precondition(val text: String)
 
 /**

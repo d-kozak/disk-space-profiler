@@ -3,12 +3,10 @@ package io.dkozak.profiler.client.viewmodel
 import io.dkozak.profiler.client.model.FileTreeModel
 import io.dkozak.profiler.client.util.DirectoryWatchService
 import io.dkozak.profiler.client.util.onUiThread
-import io.dkozak.profiler.scanner.ScanConfig
-import io.dkozak.profiler.scanner.fs.FsNode
-import io.dkozak.profiler.scanner.fs.insertSorted
-import io.dkozak.profiler.scanner.fs.propagateSizeUp
-import io.dkozak.profiler.scanner.fs.removeSelfFromTree
+import io.dkozak.profiler.scanner.DiskScanner
+import io.dkozak.profiler.scanner.fs.*
 import io.dkozak.profiler.scanner.util.BackgroundThread
+import io.dkozak.profiler.scanner.util.Precondition
 import io.dkozak.profiler.scanner.util.toFileSize
 import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.property.SimpleStringProperty
@@ -61,7 +59,7 @@ class FileTreeViewModel : ViewModel() {
      * @param fxTask current task
      */
     @BackgroundThread
-    fun newScan(rootDirectory: String, scanConfig: ScanConfig, task: FXTask<*>) {
+    fun newScan(rootDirectory: String, scanConfig: DiskScanner.ScanConfig, task: FXTask<*>) {
         fileTreeModel.newScan(rootDirectory, scanConfig, task)
     }
 
@@ -73,7 +71,7 @@ class FileTreeViewModel : ViewModel() {
     @BackgroundThread
     fun rescanFrom(selectedNode: TreeItem<FsNode>, task: FXTask<*>) {
         val newTree = fileTreeModel.rescanFrom(selectedNode, task)
-        if (newTree.value is FsNode.DirectoryNode)
+        if (newTree.isDirectory)
             onUiThread {
                 openDirectory(newTree)
             }
@@ -82,17 +80,14 @@ class FileTreeViewModel : ViewModel() {
     /**
      * Open currently selected directory
      */
+    @Precondition("node.isDirectory")
     fun openDirectory(node: TreeItem<FsNode>) {
-        when (val nodeInfo = node.value) {
-            is FsNode.DirectoryNode -> {
-                directoryContent.setAll(node.children)
-                directoryParentProperty.set(node.parent)
-                directoryNameProperty.set(node.value.file.name)
-                directoryProperty.set(node)
-                watchService.startWatching(nodeInfo.file)
-            }
-            is FsNode.FileNode -> logger.warn { "files cannot be opened this way" }
-        }
+        check(node.isDirectory) { "node $node is not a directory" }
+        directoryContent.setAll(node.children)
+        directoryParentProperty.set(node.parent)
+        directoryNameProperty.set(node.value.file.name)
+        directoryProperty.set(node)
+        watchService.startWatching(node.file)
     }
 
     /**
@@ -128,21 +123,26 @@ class FileTreeViewModel : ViewModel() {
         }
     }
 
-
-    fun onFileCreated(file: File) = onUiThread {
+    /**
+     * Callback from DirectoryWatchService executed when a new file is created
+     */
+    fun onFileCreated(file: File) {
         logger.info { "File created ${file.absolutePath}" }
         val parent = directoryProperty.get()
         if (parent == null) {
             logger.warn { "No node selected, cannot insert" }
-            return@onUiThread
+            return
         }
         parent.insertSorted(file)
         directoryContent.setAll(parent.children)
     }
 
-    fun onFileModified(file: File) = onUiThread {
+    /**
+     * Callback from DirectoryWatchService executed when a file is modified
+     */
+    fun onFileModified(file: File) {
         logger.info { "File modified ${file.absolutePath}" }
-        val correspondingNode = locateNodeFor(file) ?: return@onUiThread
+        val correspondingNode = locateNodeFor(file) ?: return
         if (correspondingNode.value is FsNode.FileNode) {
             correspondingNode.parent?.children?.invalidate()
             directoryContent.invalidate()
@@ -150,10 +150,13 @@ class FileTreeViewModel : ViewModel() {
         }
     }
 
-    fun onFileDeleted(file: File) = onUiThread {
+    /**
+     * Callback from DirectoryWatchService executed when a file is deleted
+     */
+    fun onFileDeleted(file: File) {
         logger.info { "File deleted ${file.absolutePath}" }
-        val correspondingNode = locateNodeFor(file) ?: return@onUiThread
-        correspondingNode.removeSelfFromTree()
+        val correspondingNode = locateNodeFor(file) ?: return
+        correspondingNode.detachFromTree()
         directoryContent.remove(correspondingNode)
     }
 

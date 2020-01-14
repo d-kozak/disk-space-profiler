@@ -1,14 +1,14 @@
 package io.dkozak.profiler.client.model
 
 import io.dkozak.profiler.client.event.MessageEvent
-import io.dkozak.profiler.scanner.util.BackgroundThread
 import io.dkozak.profiler.client.util.ProgressAdapter
 import io.dkozak.profiler.client.util.onUiThread
-import io.dkozak.profiler.scanner.ScanConfig
-import io.dkozak.profiler.scanner.SimpleDiscScanner
+import io.dkozak.profiler.scanner.DiskScanner
+import io.dkozak.profiler.scanner.SimpleDiskScanner
 import io.dkozak.profiler.scanner.fs.FsNode
-import io.dkozak.profiler.scanner.fs.removeSelfFromTree
+import io.dkozak.profiler.scanner.fs.detachFromTree
 import io.dkozak.profiler.scanner.fs.replaceWith
+import io.dkozak.profiler.scanner.util.BackgroundThread
 import javafx.beans.property.SimpleObjectProperty
 import javafx.scene.control.TreeItem
 import mu.KotlinLogging
@@ -27,7 +27,7 @@ class FileTreeModel : Controller() {
      */
     val rootProperty = SimpleObjectProperty<TreeItem<FsNode>>(this, "fileTree", null)
 
-    private val discScanner = SimpleDiscScanner()
+    private val discScanner = SimpleDiskScanner()
 
     /**
      * Execute new scan.
@@ -36,7 +36,7 @@ class FileTreeModel : Controller() {
      * @param fxTask current task
      */
     @BackgroundThread
-    fun newScan(rootDirectory: String, scanConfig: ScanConfig, task: FXTask<*>) {
+    fun newScan(rootDirectory: String, scanConfig: DiskScanner.ScanConfig, task: FXTask<*>) {
         val (root, time) = discScanner.newScan(rootDirectory, scanConfig, ProgressAdapter(task))
         fire(MessageEvent("Scan of '$rootDirectory' finished, it took ${time} ms"))
         logger.info { "new fstree $root" }
@@ -53,7 +53,7 @@ class FileTreeModel : Controller() {
     @BackgroundThread
     fun rescanFrom(selectedNode: TreeItem<FsNode>, task: FXTask<*>): TreeItem<FsNode> {
         val parent = selectedNode.parent
-        val (newTree, time) = discScanner.partialScan(selectedNode, ScanConfig(), ProgressAdapter(task))
+        val (newTree, time) = discScanner.rescanFrom(selectedNode, DiskScanner.ScanConfig(), ProgressAdapter(task))
         onUiThread {
             if (parent != null) {
                 selectedNode.replaceWith(newTree)
@@ -74,7 +74,7 @@ class FileTreeModel : Controller() {
             logger.warn { "failed to delete file ${node.value.file.absolutePath}" }
             return false
         }
-        node.removeSelfFromTree()
+        node.detachFromTree()
         fire(MessageEvent("${if (node.value is FsNode.DirectoryNode) "Directory" else "File"} ${node.value.file.name} deleted"))
         return true
     }

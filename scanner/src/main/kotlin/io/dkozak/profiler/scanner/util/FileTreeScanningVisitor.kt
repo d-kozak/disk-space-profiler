@@ -10,6 +10,10 @@ import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 
 
+/**
+ * Scan subtree starting at given file
+ * @return scanResult
+ */
 internal fun scanSubtree(file: File): FileTreeScanningVisitor.Result {
     val visitor = FileTreeScanningVisitor()
     Files.walkFileTree(file.toPath(), visitor)
@@ -18,8 +22,27 @@ internal fun scanSubtree(file: File): FileTreeScanningVisitor.Result {
 
 private val logger = KotlinLogging.logger { }
 
+/**
+ * FileVisitor which traverses the whole file subtree
+ * and calculates it's size and the number of directories and files
+ */
 internal class FileTreeScanningVisitor : FileVisitor<Path> {
-    data class Result(var size: FileSize = 0.bytes, var directoryCount: Int = 0, var fileCount: Int = 0)
+    /**
+     * Result of the scan
+     */
+    data class Result(
+            /**
+             * Total sum of all files
+             */
+            var size: FileSize = 0.bytes,
+            /**
+             * Count of directories
+             */
+            var directoryCount: Int = 0,
+            /**
+             * Count of files
+             */
+            var fileCount: Int = 0)
 
     var result = Result()
 

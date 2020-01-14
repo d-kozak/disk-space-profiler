@@ -2,10 +2,7 @@ package io.dkozak.profiler.scanner
 
 import io.dkozak.profiler.scanner.fs.FsNode
 import io.dkozak.profiler.scanner.fs.lazyNodeFor
-import io.dkozak.profiler.scanner.util.FileSize
-import io.dkozak.profiler.scanner.util.ProgressMonitor
-import io.dkozak.profiler.scanner.util.scanSubtree
-import io.dkozak.profiler.scanner.util.toFileSize
+import io.dkozak.profiler.scanner.util.*
 import javafx.scene.control.TreeItem
 import mu.KotlinLogging
 import java.io.File
@@ -13,18 +10,36 @@ import java.io.File
 
 private val logger = KotlinLogging.logger { }
 
-class FsCrawler(val diskRoot: TreeItem<FsNode>, private val config: ScanConfig, private val monitor: ProgressMonitor) {
+/**
+ * Crawls the fs tree in depth-first traversal.
+ * Creates intermediate representation up to specified depth,
+ * then checks deeper subtrees using FileTreeScanningVisitor
+ */
+internal class FsCrawler(
+        /**
+         * Root from which the analysis should be started
+         */
+        val diskRoot: TreeItem<FsNode>,
+        private val config: DiskScanner.ScanConfig,
+        private val monitor: ProgressMonitor) {
 
-    val errorMessages = mutableListOf<String>()
-
+    /**
+     * Count of files encountered
+     */
     var fileCount = 0
+    /**
+     * Count of directories encountered
+     */
     var directoryCount = 0
 
+    /**
+     * Crawl the fs tree starting from the diskRoot
+     * @return fs tree
+     */
     fun crawl(): TreeItem<FsNode> {
         monitor.message("scanning: ${diskRoot.value.file.name}")
         val node = recursiveScan(diskRoot.value.file)
         check(node.value is FsNode.DirectoryNode) { "node resulting from the scan is not a directory node" }
-        node.value.root.value.occupiedSpace = node.value.size
         return diskRoot.apply {
             this.value.diskRoot = node.value.diskRoot
             this.value.size = node.value.size
@@ -32,6 +47,12 @@ class FsCrawler(val diskRoot: TreeItem<FsNode>, private val config: ScanConfig, 
         }
     }
 
+    /**
+     * Crawl the fs tree starting from given file
+     * @param file to be crawled
+     * @param currentDepth depth of depth-first search
+     */
+    @Precondition("currentFile.exists")
     fun recursiveScan(currentFile: File, currentDepth: Int = 0): TreeItem<FsNode> {
         if (Thread.currentThread().isInterrupted) {
             logger.info { "Cancelation detected" }
@@ -45,7 +66,7 @@ class FsCrawler(val diskRoot: TreeItem<FsNode>, private val config: ScanConfig, 
             return processSingleFile(currentFile)
         }
         directoryCount++
-        if (currentDepth == config.treeDepth) {
+        if (currentDepth >= config.treeDepth) {
             val lazyDir = lazyNodeFor(currentFile, diskRoot)
             val (subtreeSize, subtreeDirs, subtreeFiles) = scanSubtree(currentFile)
             lazyDir.value.size = subtreeSize
@@ -84,8 +105,7 @@ class FsCrawler(val diskRoot: TreeItem<FsNode>, private val config: ScanConfig, 
                 throw ex
             } catch (ex: Exception) {
                 if (ex.message != null) {
-                    println(ex.message)
-                    errorMessages.add(ex.message!!)
+                    logger.warn { ex.message }
                 }
             }
 

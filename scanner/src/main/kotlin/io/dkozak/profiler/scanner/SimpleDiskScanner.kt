@@ -8,9 +8,12 @@ import java.io.File
 
 private val logger = KotlinLogging.logger { }
 
-class SimpleDiscScanner : DiscScanner {
+/***
+ * Simple sequential implementation of DiskScanner
+ */
+class SimpleDiskScanner : DiskScanner {
 
-    override fun newScan(root: String, config: ScanConfig, monitor: ProgressMonitor): ScanStatistics {
+    override fun newScan(root: String, config: DiskScanner.ScanConfig, monitor: ProgressMonitor): DiskScanner.ScanStatistics {
         logger.info { "Executing newScan with $config" }
         val rootFile = File(root)
         check(rootFile.exists()) { "Given root file $this does not exist" }
@@ -18,15 +21,15 @@ class SimpleDiscScanner : DiscScanner {
 
         val start = System.currentTimeMillis()
         val result = FsCrawler(TreeItem(FsNode.DiskRoot(rootFile)), config, monitor).crawl()
-        return ScanStatistics(result, System.currentTimeMillis() - start)
+        return DiskScanner.ScanStatistics(result, System.currentTimeMillis() - start)
     }
 
-    override fun partialScan(startNode: TreeItem<FsNode>, config: ScanConfig, monitor: ProgressMonitor): ScanStatistics {
+    override fun rescanFrom(startNode: TreeItem<FsNode>, config: DiskScanner.ScanConfig, monitor: ProgressMonitor): DiskScanner.ScanStatistics {
         logger.info { "Executing reScan with $config" }
         val crawler = FsCrawler(startNode.value.diskRoot, config, monitor)
         val start = System.currentTimeMillis()
         val result = crawler.recursiveScan(startNode.value.file)
-        return ScanStatistics(result, System.currentTimeMillis() - start)
+        return DiskScanner.ScanStatistics(result, System.currentTimeMillis() - start)
     }
 
 }

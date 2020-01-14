@@ -47,7 +47,9 @@ and would like to add them in the future.
 - [ ] Locate biggest files - remember N biggest files found during scan and show them in the GUI in separate view(maybe as tabpane with DirectoryView?)
 - [ ] Native file open - add support to open files natively
 - [ ] Date modified - show date modified in the GUI  
- 
+- [X] DirectoryWatchService using coroutines
+- [ ] FSCrawler using FileVisitor -> it will be probably faster for deeper trees
+- [ ] When a lazy node is visible in the FileTreeView, automatically start incremental scan of its subtree
 
 ## Run
 You can run the app directly using gradle.

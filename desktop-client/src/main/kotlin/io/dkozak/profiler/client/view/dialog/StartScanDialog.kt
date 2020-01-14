@@ -1,8 +1,9 @@
 package io.dkozak.profiler.client.view.dialog
 
+import io.dkozak.profiler.client.event.MessageEvent
 import io.dkozak.profiler.client.view.ProgressView
 import io.dkozak.profiler.client.viewmodel.FileTreeViewModel
-import io.dkozak.profiler.scanner.ScanConfig
+import io.dkozak.profiler.scanner.DiskScanner
 import javafx.beans.property.SimpleIntegerProperty
 import javafx.beans.property.SimpleStringProperty
 import javafx.geometry.Pos
@@ -27,7 +28,7 @@ class StartScanDialog : Fragment() {
     /**
      * How deep should be the tree created internally
      */
-    private val treeDepth = formViewModel.bind { SimpleIntegerProperty(ScanConfig.DEFAULT_TREE_DEPTH) }
+    private val treeDepth = formViewModel.bind { SimpleIntegerProperty(DiskScanner.ScanConfig.DEFAULT_TREE_DEPTH) }
 
 
     override val root: Parent = vbox {
@@ -85,6 +86,7 @@ class StartScanDialog : Fragment() {
                                 action {
                                     if (status.running.value) {
                                         status.item.cancel()
+                                        fire(MessageEvent("Scan cancelled"))
                                     } else {
                                         close()
                                     }
@@ -94,7 +96,7 @@ class StartScanDialog : Fragment() {
                                 enableWhen(formViewModel.valid.and(status.running.not()))
                                 action {
                                     runAsync {
-                                        fileTreeViewModel.newScan(rootDir.value, ScanConfig(treeDepth.value.toInt()), this)
+                                        fileTreeViewModel.newScan(rootDir.value, DiskScanner.ScanConfig(treeDepth.value.toInt()), this)
                                     } ui {
                                         close()
                                     }
