@@ -31,7 +31,7 @@ The following aspects will be evaluated:
 3. Simplicity and clarity of the source code.
 4. User experience.
 
-## Technical desciption
+## Technical description
 * Written in Kotlin 
 * Build using Gradle
 * [TornadoFX](https://tornadofx.io/) used for GUI
