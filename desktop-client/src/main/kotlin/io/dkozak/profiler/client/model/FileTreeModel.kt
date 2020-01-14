@@ -7,8 +7,10 @@ import io.dkozak.profiler.scanner.DiskScanner
 import io.dkozak.profiler.scanner.SimpleDiskScanner
 import io.dkozak.profiler.scanner.fs.FsNode
 import io.dkozak.profiler.scanner.fs.detachFromTree
+import io.dkozak.profiler.scanner.fs.file
 import io.dkozak.profiler.scanner.fs.replaceWith
 import io.dkozak.profiler.scanner.util.BackgroundThread
+import io.dkozak.profiler.scanner.util.Cleanup
 import javafx.beans.property.SimpleObjectProperty
 import javafx.scene.control.TreeItem
 import mu.KotlinLogging
@@ -60,7 +62,7 @@ class FileTreeModel : Controller() {
             } else {
                 rootProperty.set(newTree)
             }
-            fire(MessageEvent("Rescan of '${selectedNode.value.file.absolutePath}' finished, it took ${time} ms"))
+            fire(MessageEvent("Rescan of '${selectedNode.file.absolutePath}' finished, it took ${time} ms"))
         }
         return newTree
     }
@@ -71,7 +73,9 @@ class FileTreeModel : Controller() {
      */
     fun removeNode(node: TreeItem<FsNode>): Boolean {
         if (!node.value.file.deleteRecursively()) {
-            logger.warn { "failed to delete file ${node.value.file.absolutePath}" }
+            logger.warn { "failed to delete file ${node.file.absolutePath}" }
+            @Cleanup("separate message event for errors, show in red or smth...")
+            fire(MessageEvent("Failed to delete file ${node.file}"))
             return false
         }
         node.detachFromTree()
