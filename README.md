@@ -56,15 +56,15 @@ You can run the app directly using gradle.
 ```
 gradle run
 ```
-## Build
-Or you can build it and then run it from the resulting jar
+
+## Deploy
+To deploy the app, you can use shadowJar.
 ```
-gradle build
+gradle shadowJar
 ```
-## Test
-Tests can be executed using gralde.
+It will create a jar archive desktop-client/build/libs/desktop-client.jar, which can then be executed.
 ```
-gradle test
+java -jar desktop-client/build/libs/desktop-client.jar
 ```
 
 Note -  TornadoFX is built on top of JavaFX. Please make sure you have a jdk version with [javafx included](https://askubuntu.com/questions/1091157/javafx-missing-ubuntu-18-04).
