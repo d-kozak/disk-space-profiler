@@ -33,6 +33,11 @@ internal class FsCrawler(
     var directoryCount = 0
 
     /**
+     * current thread reference, it is expensive to ask about it every time
+     */
+    private val currentThread: Thread = Thread.currentThread()
+
+    /**
      * Crawl the fs tree starting from the diskRoot
      * @return fs tree
      */
@@ -47,6 +52,7 @@ internal class FsCrawler(
         }
     }
 
+
     /**
      * Crawl the fs tree starting from given file
      * @param file to be crawled
@@ -54,7 +60,7 @@ internal class FsCrawler(
      */
     @Precondition("currentFile.exists")
     fun recursiveScan(currentFile: File, currentDepth: Int = 0): TreeItem<FsNode> {
-        if (Thread.currentThread().isInterrupted) {
+        if (currentThread.isInterrupted) {
             logger.info { "Cancelation detected" }
             throw InterruptedException()
         }
