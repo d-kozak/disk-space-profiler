@@ -39,8 +39,9 @@ internal class FileTreeScanningVisitor : FileVisitor<Path> {
         return FileVisitResult.CONTINUE
     }
 
-    override fun visitFileFailed(file: Path, exc: IOException?): FileVisitResult {
+    override fun visitFileFailed(file: Path, exc: IOException): FileVisitResult {
         logger.warn { "Failed for $file" }
+        exc.printStackTrace()
         return FileVisitResult.CONTINUE
     }
 
