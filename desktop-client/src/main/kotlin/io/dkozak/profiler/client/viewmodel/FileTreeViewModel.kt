@@ -6,6 +6,7 @@ import io.dkozak.profiler.client.util.onUiThread
 import io.dkozak.profiler.scanner.ScanConfig
 import io.dkozak.profiler.scanner.fs.FsNode
 import io.dkozak.profiler.scanner.fs.insertSorted
+import io.dkozak.profiler.scanner.fs.removeSelfFromTree
 import io.dkozak.profiler.scanner.util.toFileSize
 import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.property.SimpleStringProperty
@@ -102,6 +103,7 @@ class FileTreeViewModel : ViewModel() {
         logger.info { "File modified ${file.absolutePath}" }
         val correspondingNode = locateNodeFor(file) ?: return
         if (correspondingNode.value is FsNode.FileNode) {
+
             correspondingNode.value.size = file.length().toFileSize()
             correspondingNode.parent?.children?.invalidate()
             selectedNodeContent.invalidate()
@@ -111,7 +113,7 @@ class FileTreeViewModel : ViewModel() {
     fun onFileDeleted(file: File) {
         logger.info { "File deleted ${file.absolutePath}" }
         val correspondingNode = locateNodeFor(file) ?: return
-        correspondingNode.removeFromParent()
+        correspondingNode.removeSelfFromTree()
         selectedNodeContent.remove(correspondingNode)
     }
 

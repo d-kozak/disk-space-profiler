@@ -12,7 +12,7 @@ sealed class FsNode(var file: File) {
     var comparator: Comparator<TreeItem<FsNode>> = DEFAULT_COMPARATOR
 
     internal lateinit var diskRoot: TreeItem<FsNode>
-    var size = 0.bytes
+    var size = file.length().toFileSize()
 
     val root: TreeItem<DiskRoot>
         get() = diskRoot as TreeItem<DiskRoot>

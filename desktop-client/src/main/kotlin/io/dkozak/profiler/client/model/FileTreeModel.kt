@@ -6,7 +6,8 @@ import io.dkozak.profiler.client.util.onUiThread
 import io.dkozak.profiler.scanner.ScanConfig
 import io.dkozak.profiler.scanner.SimpleDiscScanner
 import io.dkozak.profiler.scanner.fs.FsNode
-import io.dkozak.profiler.scanner.fs.insertSorted
+import io.dkozak.profiler.scanner.fs.removeSelfFromTree
+import io.dkozak.profiler.scanner.fs.replaceWith
 import javafx.beans.property.SimpleObjectProperty
 import javafx.scene.control.TreeItem
 import mu.KotlinLogging
@@ -34,8 +35,7 @@ class FileTreeModel : Controller() {
         val (newTree, time) = discScanner.partialScan(selectedNode, ScanConfig(), ProgressAdapter(task))
         onUiThread {
             if (parent != null) {
-                selectedNode.removeFromParent()
-                parent.insertSorted(newTree)
+                selectedNode.replaceWith(newTree)
             } else {
                 fileTreeProperty.set(newTree)
             }
@@ -49,8 +49,10 @@ class FileTreeModel : Controller() {
             logger.warn { "failed to delete file ${node.value.file.absolutePath}" }
             return false
         }
-        node.removeFromParent()
+        node.removeSelfFromTree()
         fire(MessageEvent("${if (node.value is FsNode.DirectoryNode) "Directory" else "File"} ${node.value.file.name} deleted"))
         return true
     }
 }
+
+

@@ -32,4 +32,6 @@ inline class FileSize(val bytes: Long = 0) : Comparable<FileSize> {
 
     private fun toUnit(value: Long, unit: String) =
             "${numberFormat.format(bytes.toDouble() / value)} ${unit}"
+
+    operator fun unaryMinus(): FileSize = FileSize(-bytes)
 }
