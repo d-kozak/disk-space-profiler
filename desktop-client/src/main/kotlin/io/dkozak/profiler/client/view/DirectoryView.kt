@@ -35,7 +35,7 @@ class DirectoryView : View() {
                 }
             }
         }
-        listview(fileTreeViewModel.selectedNodeContentProperty) {
+        listview(fileTreeViewModel.selectedNodeContent) {
             vboxConstraints {
                 vGrow = Priority.ALWAYS
             }
@@ -84,7 +84,7 @@ class DirectoryView : View() {
                             val item = selectedItem?.parent ?: return@action
                             item.children.sortWith(FsNodeByNameComparator)
                             item.value.comparator = FsNodeByNameComparator
-                            fileTreeViewModel.selectedNodeContentProperty.setAll(item.children)
+                            fileTreeViewModel.selectedNodeContent.setAll(item.children)
                         }
                     }
                     item("by size") {
@@ -92,7 +92,7 @@ class DirectoryView : View() {
                             val item = selectedItem?.parent ?: return@action
                             item.children.sortWith(FsNodeBySizeComparator)
                             item.value.comparator = FsNodeBySizeComparator
-                            fileTreeViewModel.selectedNodeContentProperty.setAll(item.children)
+                            fileTreeViewModel.selectedNodeContent.setAll(item.children)
                         }
                     }
                 }

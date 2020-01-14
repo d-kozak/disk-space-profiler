@@ -6,6 +6,7 @@ import io.dkozak.profiler.client.util.onUiThread
 import io.dkozak.profiler.scanner.ScanConfig
 import io.dkozak.profiler.scanner.SimpleDiscScanner
 import io.dkozak.profiler.scanner.fs.FsNode
+import io.dkozak.profiler.scanner.fs.insertSorted
 import javafx.beans.property.SimpleObjectProperty
 import javafx.scene.control.TreeItem
 import mu.KotlinLogging
@@ -34,9 +35,7 @@ class FileTreeModel : Controller() {
         onUiThread {
             if (parent != null) {
                 selectedNode.removeFromParent()
-                val toInsert = parent.children.binarySearch(newTree, parent.value.comparator)
-                check(toInsert < 0) { "node should NOT be in the tree right now" }
-                parent.children.add(-toInsert - 1, newTree)
+                parent.insertSorted(newTree)
             } else {
                 fileTreeProperty.set(newTree)
             }

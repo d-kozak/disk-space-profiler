@@ -1,8 +1,10 @@
 package io.dkozak.profiler.scanner
 
 import io.dkozak.profiler.scanner.fs.FsNode
+import io.dkozak.profiler.scanner.fs.lazyNodeFor
 import io.dkozak.profiler.scanner.util.FileSize
 import io.dkozak.profiler.scanner.util.ProgressMonitor
+import io.dkozak.profiler.scanner.util.toFileSize
 import javafx.scene.control.TreeItem
 import java.io.File
 
@@ -35,12 +37,8 @@ class FsCrawler(val diskRoot: TreeItem<FsNode>, private val config: ScanConfig, 
         }
         directoryCount++
         if (currentDepth == config.treeDepth) {
-            val lazyDir = TreeItem<FsNode>(FsNode.DirectoryNode(currentFile))
-            lazyDir.value.diskRoot = diskRoot
-            lazyDir.value.size += calcSize(currentFile)
-            val lazyNode: TreeItem<FsNode> = TreeItem(FsNode.LazyNode(currentFile))
-            lazyNode.value.diskRoot = diskRoot
-            lazyDir.children.add(lazyNode)
+            val lazyDir = lazyNodeFor(currentFile, diskRoot)
+            lazyDir.value.size = calcSize(currentFile)
             return lazyDir
         }
         return processDirectory(currentFile, currentDepth + 1)
@@ -62,6 +60,7 @@ class FsCrawler(val diskRoot: TreeItem<FsNode>, private val config: ScanConfig, 
         }
 
         val directoryNode: TreeItem<FsNode> = TreeItem(nodeInfo)
+        directoryNode.value.size = currentFile.length().toFileSize()
 
         for (file in files) {
             try {
