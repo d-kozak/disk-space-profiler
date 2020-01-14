@@ -6,7 +6,10 @@ import javafx.scene.Parent
 import javafx.scene.control.TreeItem
 import tornadofx.*
 
-
+/**
+ * One node in the FileTreeView's treeview
+ * @see FileTreeView
+ */
 class FileTreeNodeView : Fragment() {
 
     val node: TreeItem<FsNode> by param()

@@ -1,20 +1,31 @@
 package io.dkozak.profiler.client.model
 
 import io.dkozak.profiler.client.event.MessageEvent
+import io.dkozak.profiler.scanner.util.Invariant
 import javafx.collections.FXCollections
 import javafx.collections.ObservableList
-import tornadofx.*
+import tornadofx.Controller
 
+/**
+ * Holds last messages
+ */
 class MessageModel : Controller() {
+    /**
+     * amount of messages to be kept
+     */
     val messageLimit = 10
 
-    val events: ObservableList<MessageEvent> = FXCollections.observableList(mutableListOf<MessageEvent>())
+    /**
+     * last messages that were received
+     */
+    @Invariant("lastMessages.size <= messageLimit")
+    val lastMessages: ObservableList<MessageEvent> = FXCollections.observableList(mutableListOf<MessageEvent>())
 
     init {
         subscribe<MessageEvent> { event ->
-            events.add(event)
-            if (events.size > messageLimit)
-                events.remove(0, events.size - messageLimit)
+            lastMessages.add(event)
+            if (lastMessages.size > messageLimit)
+                lastMessages.remove(0, lastMessages.size - messageLimit)
         }
     }
 }

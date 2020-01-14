@@ -3,6 +3,9 @@ package io.dkozak.profiler.client.view
 import javafx.geometry.Pos
 import tornadofx.*
 
+/**
+ * Displays the current progress of scanning.
+ */
 class ProgressView : Fragment() {
 
     val showMessage: Boolean by param(true)

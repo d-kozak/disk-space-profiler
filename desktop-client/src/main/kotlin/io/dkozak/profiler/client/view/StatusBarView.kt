@@ -6,6 +6,9 @@ import javafx.beans.property.SimpleStringProperty
 import javafx.scene.Parent
 import tornadofx.*
 
+/**
+ * Displays the bottom status bar containing last message, progressbar and information about disk usage
+ */
 class StatusBarView : View() {
     private val messageViewModel: LastMessageViewModel by inject()
 

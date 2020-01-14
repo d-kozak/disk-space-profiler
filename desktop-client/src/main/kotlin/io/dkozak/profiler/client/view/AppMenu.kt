@@ -2,7 +2,7 @@ package io.dkozak.profiler.client.view
 
 import io.dkozak.profiler.client.view.dialog.AboutDialog
 import io.dkozak.profiler.client.view.dialog.InstructionsDialog
-import io.dkozak.profiler.client.view.dialog.StartAnalysisDialog
+import io.dkozak.profiler.client.view.dialog.StartScanDialog
 import javafx.scene.Parent
 import javafx.stage.StageStyle
 import tornadofx.*
@@ -12,7 +12,7 @@ class AppMenu : View() {
         menu("Analysis") {
             item("Run") {
                 action {
-                    find<StartAnalysisDialog>().openModal(stageStyle = StageStyle.UTILITY)
+                    find<StartScanDialog>().openModal(stageStyle = StageStyle.UTILITY)
                 }
             }
         }

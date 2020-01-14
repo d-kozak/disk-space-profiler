@@ -8,20 +8,24 @@ import javafx.scene.Parent
 import javafx.scene.control.TreeItem
 import tornadofx.*
 
+/**
+ * Confirmation dialog for deleting files
+ */
 class DeleteFileDialog : Fragment() {
-    val node: TreeItem<FsNode> by param()
 
-    val fileTreeViewModel: FileTreeViewModel by inject()
+    val fileToDelete: TreeItem<FsNode> by param()
+
+    private val fileTreeViewModel: FileTreeViewModel by inject()
 
     override val root: Parent = borderpane {
-        title = "Delete ${if (node.value.file.isDirectory) "directory" else "file"} ${node.value.file.name}"
+        title = "Delete ${if (fileToDelete.value.file.isDirectory) "directory" else "file"} ${fileToDelete.value.file.name}"
 
         style {
             padding = box(5.px)
         }
 
         center {
-            label("Are you sure that you want to delete ${if (node.value.file.isDirectory) "directory" else "file"} ${node.value.file.name}") {
+            label("Are you sure that you want to delete ${if (fileToDelete.value.file.isDirectory) "directory" else "file"} ${fileToDelete.value.file.name}") {
                 style {
                     padding = box(10.px)
                 }
@@ -37,7 +41,7 @@ class DeleteFileDialog : Fragment() {
                 }
                 button("Delete") {
                     action {
-                        fileTreeViewModel.removeNode(node)
+                        fileTreeViewModel.removeNode(fileToDelete)
                         close()
                     }
                 }

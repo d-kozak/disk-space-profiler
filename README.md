@@ -31,12 +31,40 @@ The following aspects will be evaluated:
 3. Simplicity and clarity of the source code.
 4. User experience.
 
-## Used technology
+## Technical desciption
 * Written in Kotlin 
-* TornadoFX used for GUI - https://tornadofx.io/
-    * Based on the examples from https://github.com/edvin/tornadofx-samples
-        * TreeView -  https://github.com/edvin/tornadofx-samples/tree/master/treeviews
-    
-# Build
-Note if you are on Ubuntu, please make sure you have a jdk version with [javafx included](https://askubuntu.com/questions/1091157/javafx-missing-ubuntu-18-04).
+* Build using Gradle
+* [TornadoFX](https://tornadofx.io/) used for GUI
+* Consists of two modules
+    * desktop-client - GUI of the program
+    * scanner -  disk crawling functionality, file system (fs) tree model
+
+## Extensions
+This sections contains features that were not implemented yet, but the author has thought about them 
+and would like to add them in the future.
+[ ] FsTree updates on the fly - update the fs tree incrementally during analysis -> better user experience
+[ ] Concurrent scanning - try to paralelize the scanning process
+[ ] Locate biggest files - remember N biggest files found during scan and show them in the GUI in separate view(maybe as tabpane with DirectoryView?)
+[ ] Native file open - add support to open files natively
+[ ] Date modified - show date modified in the GUI  
+ 
+
+## Run
+You can run the app directly using gradle.
+```
+gradle run
+```
+## Build
+Or you can build it and then run it from the resulting jar
+```
+gradle build
+```
+## Test
+Tests can be executed using gralde.
+```
+gradle test
+```
+
+Note -  TornadoFX is built on top of JavaFX. Please make sure you have a jdk version with [javafx included](https://askubuntu.com/questions/1091157/javafx-missing-ubuntu-18-04).
+
 

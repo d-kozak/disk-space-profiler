@@ -10,14 +10,23 @@ import javafx.scene.Parent
 import tornadofx.*
 import java.io.File
 
-class StartAnalysisDialog : Fragment() {
+/**
+ * Dialog for starting new scan.
+ */
+class StartScanDialog : Fragment() {
     private val status: TaskStatus by inject()
 
     private val fileTreeViewModel: FileTreeViewModel by inject()
 
     private val formViewModel = ViewModel()
 
+    /**
+     * From where to start the scan
+     */
     private val rootDir = formViewModel.bind { SimpleStringProperty("/") }
+    /**
+     * How deep should be the tree created internally
+     */
     private val treeDepth = formViewModel.bind { SimpleIntegerProperty(ScanConfig.DEFAULT_TREE_DEPTH) }
 
 

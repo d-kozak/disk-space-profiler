@@ -8,6 +8,10 @@ import javafx.scene.control.TreeItem
 import javafx.scene.layout.Priority
 import tornadofx.*
 
+/**
+ * One cell in the DirectoryView's listview
+ * @see DirectoryView
+ */
 class DirectoryNodeView : Fragment() {
 
     val node: TreeItem<FsNode> by param()

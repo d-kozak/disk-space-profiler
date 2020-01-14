@@ -6,6 +6,11 @@ import tornadofx.*
 
 private val logger = KotlinLogging.logger { }
 
+/**
+ * Adapter translating messages from the ProgressMonitor to FxXTask.
+ * @see ProgressMonitor
+ * @see FXTask
+ */
 class ProgressAdapter(private val task: FXTask<*>) : ProgressMonitor {
     override fun message(text: String) {
         logger.debug { "message $text" }

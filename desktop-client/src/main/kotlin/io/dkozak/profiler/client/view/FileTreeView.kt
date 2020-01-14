@@ -13,6 +13,9 @@ import tornadofx.*
 
 private val logger = KotlinLogging.logger { }
 
+/**
+ * Displays the whole scanned file tree in a treeview.
+ */
 class FileTreeView : View() {
 
     private val fileTreeViewModel: FileTreeViewModel by inject()
@@ -23,7 +26,7 @@ class FileTreeView : View() {
             graphic = find<FileTreeNodeView>(mapOf(FileTreeNodeView::node to treeItem)).root
             onDoubleClick {
                 if (treeItem.value !is FsNode.LazyNode)
-                    fileTreeViewModel.entrySelected(treeItem)
+                    fileTreeViewModel.openDirectory(treeItem)
             }
         }
 
@@ -31,7 +34,7 @@ class FileTreeView : View() {
             if ((event.code == KeyCode.ENTER) && !event.isMetaDown && this.selectionModel.selectedItems.size == 1) {
                 val node = this.selectionModel.selectedItems[0]
                 node.expandedProperty().set(true)
-                fileTreeViewModel.entrySelected(node)
+                fileTreeViewModel.openDirectory(node)
             }
         }
 
@@ -42,7 +45,7 @@ class FileTreeView : View() {
                     if (node.value is FsNode.LazyNode)
                         node = node.parent ?: node
                     runAsync {
-                        fileTreeViewModel.partialScan(node, this)
+                        fileTreeViewModel.rescanFrom(node, this)
                     }
                 }
             }
@@ -68,7 +71,7 @@ class FileTreeView : View() {
                     if (node.value is FsNode.DiskRoot) {
                         logger.warn { "Attempt to delete $selectedValue, this type is not supported" }
                     } else {
-                        find<DeleteFileDialog>(mapOf(DeleteFileDialog::node to node)).openModal(stageStyle = StageStyle.UTILITY)
+                        find<DeleteFileDialog>(mapOf(DeleteFileDialog::fileToDelete to node)).openModal(stageStyle = StageStyle.UTILITY)
                     }
                 }
             }

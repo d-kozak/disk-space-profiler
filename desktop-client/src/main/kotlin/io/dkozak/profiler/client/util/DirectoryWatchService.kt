@@ -12,6 +12,11 @@ import java.nio.file.WatchKey
 
 private val logger = KotlinLogging.logger { }
 
+/**
+ * Watches a gives directory for changes,
+ * executes callbacks back to the FileTreeViewModel.
+ * @see FileTreeViewModel
+ */
 class DirectoryWatchService(val fileTreeViewModel: FileTreeViewModel) {
 
     private var lastTask: Deferred<Unit>? = null

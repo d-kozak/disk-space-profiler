@@ -1,9 +1,12 @@
 package io.dkozak.profiler.client.view
 
-import io.dkozak.profiler.client.view.dialog.StartAnalysisDialog
+import io.dkozak.profiler.client.view.dialog.StartScanDialog
 import javafx.stage.StageStyle
 import tornadofx.*
 
+/**
+ * Root view of the app
+ */
 class RootView : View() {
     override val root = borderpane {
         title = "Disk space analyzer"
@@ -20,6 +23,6 @@ class RootView : View() {
     }
 
     init {
-        find<StartAnalysisDialog>().openModal(stageStyle = StageStyle.UTILITY)
+        find<StartScanDialog>().openModal(stageStyle = StageStyle.UTILITY)
     }
 }

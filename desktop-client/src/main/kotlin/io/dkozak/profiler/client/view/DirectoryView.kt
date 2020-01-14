@@ -11,6 +11,9 @@ import javafx.scene.text.FontWeight
 import javafx.stage.StageStyle
 import tornadofx.*
 
+/**
+ * Displays the currently selected directory with it's content.
+ */
 class DirectoryView : View() {
 
     private val fileTreeViewModel: FileTreeViewModel by inject()
@@ -20,14 +23,14 @@ class DirectoryView : View() {
             left {
                 button {
                     graphic = imageview("back.png")
-                    enableWhen(fileTreeViewModel.selectedNodeParentProperty.isNotNull)
+                    enableWhen(fileTreeViewModel.directoryParentProperty.isNotNull)
                     action {
                         fileTreeViewModel.goToParent()
                     }
                 }
             }
             center {
-                label(fileTreeViewModel.selectedNodeNameProperty) {
+                label(fileTreeViewModel.directoryNameProperty) {
                     style {
                         padding = box(5.px)
                         fontWeight = FontWeight.BOLD
@@ -35,7 +38,7 @@ class DirectoryView : View() {
                 }
             }
         }
-        listview(fileTreeViewModel.selectedNodeContent) {
+        listview(fileTreeViewModel.directoryContent) {
             vboxConstraints {
                 vGrow = Priority.ALWAYS
             }
@@ -48,18 +51,18 @@ class DirectoryView : View() {
                 val selectedItem = this.selectedItem
                 if ((event.code == KeyCode.ENTER || event.code == KeyCode.DELETE) && !event.isMetaDown && selectedItem != null) {
                     when (event.code) {
-                        KeyCode.ENTER -> fileTreeViewModel.entrySelected(selectedItem)
-                        KeyCode.DELETE -> find<DeleteFileDialog>(mapOf(DeleteFileDialog::node to selectedItem)).openModal(stageStyle = StageStyle.UTILITY)
+                        KeyCode.ENTER -> fileTreeViewModel.openDirectory(selectedItem)
+                        KeyCode.DELETE -> find<DeleteFileDialog>(mapOf(DeleteFileDialog::fileToDelete to selectedItem)).openModal(stageStyle = StageStyle.UTILITY)
                     }
                 }
             }
 
             onDoubleClick {
-                fileTreeViewModel.entrySelected(selectedItem ?: return@onDoubleClick)
+                fileTreeViewModel.openDirectory(selectedItem ?: return@onDoubleClick)
             }
 
             shortcut("alt+right") {
-                fileTreeViewModel.entrySelected(selectedItem ?: return@shortcut)
+                fileTreeViewModel.openDirectory(selectedItem ?: return@shortcut)
             }
 
             shortcut("alt+left") {
@@ -73,7 +76,7 @@ class DirectoryView : View() {
                         if (node.value is FsNode.LazyNode)
                             node = node.parent ?: node
                         runAsync {
-                            fileTreeViewModel.partialScan(node, this)
+                            fileTreeViewModel.rescanFrom(node, this)
                         }
 
                     }
@@ -84,7 +87,7 @@ class DirectoryView : View() {
                             val item = selectedItem?.parent ?: return@action
                             item.children.sortWith(FsNodeByNameComparator)
                             item.value.comparator = FsNodeByNameComparator
-                            fileTreeViewModel.selectedNodeContent.setAll(item.children)
+                            fileTreeViewModel.directoryContent.setAll(item.children)
                         }
                     }
                     item("by size") {
@@ -92,13 +95,13 @@ class DirectoryView : View() {
                             val item = selectedItem?.parent ?: return@action
                             item.children.sortWith(FsNodeBySizeComparator)
                             item.value.comparator = FsNodeBySizeComparator
-                            fileTreeViewModel.selectedNodeContent.setAll(item.children)
+                            fileTreeViewModel.directoryContent.setAll(item.children)
                         }
                     }
                 }
                 item("Delete") {
                     action {
-                        find<DeleteFileDialog>(mapOf(DeleteFileDialog::node to (selectedItem
+                        find<DeleteFileDialog>(mapOf(DeleteFileDialog::fileToDelete to (selectedItem
                                 ?: return@action))).openModal(stageStyle = StageStyle.UTILITY)
                     }
                 }
