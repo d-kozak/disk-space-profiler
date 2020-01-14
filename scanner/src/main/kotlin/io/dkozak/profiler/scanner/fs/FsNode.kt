@@ -2,7 +2,6 @@ package io.dkozak.profiler.scanner.fs
 
 
 import io.dkozak.profiler.scanner.util.FileSize
-import io.dkozak.profiler.scanner.util.bytes
 import io.dkozak.profiler.scanner.util.toFileSize
 import javafx.scene.control.TreeItem
 import java.io.File
@@ -19,6 +18,8 @@ sealed class FsNode(var file: File) {
 
     val spaceTaken: Double
         get() = this.size.relativeTo(this.file.totalSpace.toFileSize())
+                .coerceAtLeast(0.0)
+                .coerceAtMost(1.0)
 
     val totalSpace: FileSize
         get() = this.file.totalSpace.toFileSize()
