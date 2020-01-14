@@ -7,8 +7,11 @@ import io.dkozak.profiler.scanner.util.ProgressMonitor
 import io.dkozak.profiler.scanner.util.scanSubtree
 import io.dkozak.profiler.scanner.util.toFileSize
 import javafx.scene.control.TreeItem
+import mu.KotlinLogging
 import java.io.File
 
+
+private val logger = KotlinLogging.logger { }
 
 class FsCrawler(val diskRoot: TreeItem<FsNode>, private val config: ScanConfig, private val monitor: ProgressMonitor) {
 
@@ -30,6 +33,11 @@ class FsCrawler(val diskRoot: TreeItem<FsNode>, private val config: ScanConfig, 
     }
 
     fun recursiveScan(currentFile: File, currentDepth: Int = 0): TreeItem<FsNode> {
+        if (Thread.currentThread().isInterrupted) {
+            logger.info { "Cancelation detected" }
+            throw InterruptedException()
+        }
+
         monitor.message("ScanInfo: ${fileCount} files, ${directoryCount} directories, depth $currentDepth")
         check(currentFile.exists()) { "file ${currentFile.absolutePath} does not exist" }
         if (!currentFile.isDirectory) {
@@ -71,6 +79,9 @@ class FsCrawler(val diskRoot: TreeItem<FsNode>, private val config: ScanConfig, 
                 val node = recursiveScan(file, currentDepth)
                 directoryNode.value.size += node.value.size
                 directoryNode.children.add(node)
+            } catch (ex: InterruptedException) {
+                // just push it up
+                throw ex
             } catch (ex: Exception) {
                 if (ex.message != null) {
                     println(ex.message)
