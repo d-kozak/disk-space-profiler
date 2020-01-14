@@ -38,7 +38,7 @@ class FsCrawler(val diskRoot: TreeItem<FsNode>, private val config: ScanConfig, 
         directoryCount++
         if (currentDepth == config.treeDepth) {
             val lazyDir = lazyNodeFor(currentFile, diskRoot)
-            lazyDir.value.size = calcSize(currentFile)
+            lazyDir.value.size += calcSize(currentFile)
             return lazyDir
         }
         return processDirectory(currentFile, currentDepth + 1)

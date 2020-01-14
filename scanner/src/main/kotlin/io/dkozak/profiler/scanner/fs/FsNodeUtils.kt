@@ -1,5 +1,6 @@
 package io.dkozak.profiler.scanner.fs
 
+import io.dkozak.profiler.scanner.util.toFileSize
 import javafx.scene.control.TreeItem
 import java.io.File
 
@@ -25,6 +26,7 @@ fun TreeItem<FsNode>.insertSorted(node: TreeItem<FsNode>): TreeItem<FsNode> {
 internal fun lazyNodeFor(currentFile: File, diskRoot: TreeItem<FsNode>): TreeItem<FsNode> {
     val lazyDir = TreeItem<FsNode>(FsNode.DirectoryNode(currentFile))
     lazyDir.value.diskRoot = diskRoot
+    lazyDir.value.size = currentFile.length().toFileSize()
     val lazyNode: TreeItem<FsNode> = TreeItem(FsNode.LazyNode(currentFile))
     lazyNode.value.diskRoot = diskRoot
     lazyDir.children.add(lazyNode)
