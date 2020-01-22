@@ -29,6 +29,11 @@ sealed class FsNode(var file: File) {
     var size = file.length().toFileSize()
 
     /**
+     * True if this node's subtree is currently being scanned
+     */
+    var scanStarted = false
+
+    /**
      * Root of the tree - every node can access it for convenience
      */
     @Cleanup("diskroot vs root - could not find to way to make the type system happy")

@@ -14,6 +14,19 @@ val TreeItem<FsNode>.isDirectory: Boolean
     get() = this.value is FsNode.DirectoryNode
 
 /**
+ * reference to a lazy child node, if there is one
+ */
+val TreeItem<FsNode>.lazyChild: TreeItem<FsNode.LazyNode>?
+    get() = if (this.isDirectory) this.children.firstOrNull { it.isLazy } as? TreeItem<FsNode.LazyNode> else null
+
+
+/**
+ * true if this node is not lazy
+ */
+val TreeItem<FsNode>.isNotLazy: Boolean
+    get() = !this.isLazy
+
+/**
  * true if this node is lazy
  */
 val TreeItem<FsNode>.isLazy: Boolean

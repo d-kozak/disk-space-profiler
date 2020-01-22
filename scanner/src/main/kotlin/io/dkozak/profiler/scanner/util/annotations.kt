@@ -37,3 +37,11 @@ annotation class Precondition(val text: String)
 @Retention(AnnotationRetention.SOURCE)
 @MustBeDocumented
 annotation class BackgroundThread
+
+/**
+ * Denotes a function or a class (in that case it applies to all its methods) that should be executed only from the ui thread.
+ */
+@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
+@Retention(AnnotationRetention.SOURCE)
+@MustBeDocumented
+annotation class UiThread

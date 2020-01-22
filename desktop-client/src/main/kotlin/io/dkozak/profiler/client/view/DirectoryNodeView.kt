@@ -20,7 +20,7 @@ class DirectoryNodeView : Fragment() {
 
     override val root: Parent = hbox(4) {
         if (node.isLazy) {
-            label("...")
+            label("...loading...")
         } else {
             if (node.isDirectory)
                 imageview("folder.png")

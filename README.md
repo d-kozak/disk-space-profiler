@@ -49,7 +49,7 @@ and would like to add them in the future.
 - [ ] Date modified - show date modified in the GUI  
 - [X] DirectoryWatchService using coroutines
 - [ ] FSCrawler using FileVisitor -> it will be probably faster for deeper trees
-- [ ] When a lazy node is visible in the FileTreeView, automatically start incremental scan of its subtree
+- [X] When a lazy node is visible in the FileTreeView, automatically start incremental scan of its subtree
 
 ## Run
 You can run the app directly using gradle.

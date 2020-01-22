@@ -6,7 +6,6 @@ import io.dkozak.profiler.client.util.onUiThread
 import io.dkozak.profiler.scanner.DiskScanner
 import io.dkozak.profiler.scanner.fs.*
 import io.dkozak.profiler.scanner.util.BackgroundThread
-import io.dkozak.profiler.scanner.util.Precondition
 import io.dkozak.profiler.scanner.util.toFileSize
 import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.property.SimpleStringProperty
@@ -84,9 +83,13 @@ class FileTreeViewModel : ViewModel() {
     /**
      * Open currently selected directory
      */
-    @Precondition("node.isDirectory")
     fun openDirectory(node: TreeItem<FsNode>) {
-        check(node.isDirectory) { "node $node is not a directory" }
+        if (!node.isDirectory) {
+            logger.warn { "node $node is not a directory" }
+            return
+        }
+        node.lazyChild?.let { fileTreeModel.rescanRequested(node)?.ui { openDirectory(it) } }
+
         directoryContent.setAll(node.children)
         directoryParentProperty.set(node.parent)
         directoryNameProperty.set(node.value.file.name)

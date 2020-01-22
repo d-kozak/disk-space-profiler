@@ -5,12 +5,11 @@ import io.dkozak.profiler.client.util.ProgressAdapter
 import io.dkozak.profiler.client.util.onUiThread
 import io.dkozak.profiler.scanner.DiskScanner
 import io.dkozak.profiler.scanner.SimpleDiskScanner
-import io.dkozak.profiler.scanner.fs.FsNode
-import io.dkozak.profiler.scanner.fs.detachFromTree
-import io.dkozak.profiler.scanner.fs.file
-import io.dkozak.profiler.scanner.fs.replaceWith
+import io.dkozak.profiler.scanner.fs.*
 import io.dkozak.profiler.scanner.util.BackgroundThread
+import io.dkozak.profiler.scanner.util.UiThread
 import javafx.beans.property.SimpleObjectProperty
+import javafx.concurrent.Task
 import javafx.scene.control.TreeItem
 import mu.KotlinLogging
 import tornadofx.*
@@ -38,10 +37,12 @@ class FileTreeModel : Controller() {
      */
     @BackgroundThread
     fun newScan(rootDirectory: String, scanConfig: DiskScanner.ScanConfig, task: FXTask<*>) {
+        fire(MessageEvent("Scan of '$rootDirectory' started"))
         val (root, time) = discScanner.newScan(rootDirectory, scanConfig, ProgressAdapter(task))
         fire(MessageEvent("Scan of '$rootDirectory' finished, it took ${time} ms"))
         logger.info { "new fstree $root" }
         onUiThread {
+            registerExpandListeners(root)
             rootProperty.set(root)
         }
     }
@@ -53,17 +54,45 @@ class FileTreeModel : Controller() {
      */
     @BackgroundThread
     fun rescanFrom(selectedNode: TreeItem<FsNode>, task: FXTask<*>): TreeItem<FsNode> {
+        fire(MessageEvent("Scan of '${selectedNode.file.absolutePath}' started"))
         val parent = selectedNode.parent
         val (newTree, time) = discScanner.rescanFrom(selectedNode, DiskScanner.ScanConfig(), ProgressAdapter(task))
         onUiThread {
+            registerExpandListeners(newTree)
             if (parent != null) {
                 selectedNode.replaceWith(newTree)
             } else {
                 rootProperty.set(newTree)
             }
+            newTree.isExpanded = true
             fire(MessageEvent("Rescan of '${selectedNode.file.absolutePath}' finished, it took ${time} ms"))
         }
         return newTree
+    }
+
+    @UiThread
+    fun rescanRequested(node: TreeItem<FsNode>): Task<TreeItem<FsNode>>? = if (!node.value.scanStarted) {
+        node.value.scanStarted = true
+        runAsync { rescanFrom(node, this) } ui {
+            node.value.scanStarted = false
+        }
+    } else {
+        logger.info { "scan for ${node.file.absolutePath} is already running" }
+        null
+    }
+
+
+    /**
+     * Registers expand listener for lazy node in the tree, so that rescan is triggered automatically when such node is visible
+     */
+    @UiThread
+    private fun registerExpandListeners(node: TreeItem<FsNode>) {
+        val lazyChild = node.lazyChild
+        if (lazyChild != null) {
+            node.expandedProperty().onChange { if (it) rescanRequested(node) }
+        } else if (node.isDirectory) {
+            node.children.forEach(::registerExpandListeners)
+        }
     }
 
     /**

@@ -3,10 +3,7 @@ package io.dkozak.profiler.client.view
 
 import io.dkozak.profiler.client.view.dialog.openDeleteFileDialog
 import io.dkozak.profiler.client.viewmodel.FileTreeViewModel
-import io.dkozak.profiler.scanner.fs.FsNode
-import io.dkozak.profiler.scanner.fs.FsNodeByNameComparator
-import io.dkozak.profiler.scanner.fs.FsNodeBySizeComparator
-import io.dkozak.profiler.scanner.fs.isLazy
+import io.dkozak.profiler.scanner.fs.*
 import javafx.scene.input.KeyCode
 import mu.KotlinLogging
 import tornadofx.*
@@ -25,8 +22,7 @@ class FileTreeView : View() {
         cellFormat {
             graphic = find<FileTreeNodeView>(mapOf(FileTreeNodeView::node to treeItem)).root
             onDoubleClick {
-                if (treeItem.value !is FsNode.LazyNode)
-                    fileTreeViewModel.openDirectory(treeItem)
+                if (treeItem.isNotLazy) fileTreeViewModel.openDirectory(treeItem)
             }
         }
 
