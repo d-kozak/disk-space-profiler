@@ -10,7 +10,6 @@ import io.dkozak.profiler.scanner.fs.detachFromTree
 import io.dkozak.profiler.scanner.fs.file
 import io.dkozak.profiler.scanner.fs.replaceWith
 import io.dkozak.profiler.scanner.util.BackgroundThread
-import io.dkozak.profiler.scanner.util.Cleanup
 import javafx.beans.property.SimpleObjectProperty
 import javafx.scene.control.TreeItem
 import mu.KotlinLogging
@@ -73,9 +72,10 @@ class FileTreeModel : Controller() {
      */
     fun removeNode(node: TreeItem<FsNode>): Boolean {
         if (!node.value.file.deleteRecursively()) {
-            logger.warn { "failed to delete file ${node.file.absolutePath}" }
-            @Cleanup("separate message event for errors, show in red or smth...")
-            fire(MessageEvent("Failed to delete file ${node.file}"))
+            val errorMessage = "Failed to delete file ${node.file.absolutePath}"
+            logger.warn { errorMessage }
+            error("Delete failed", errorMessage)
+            fire(MessageEvent(errorMessage))
             return false
         }
         node.detachFromTree()
