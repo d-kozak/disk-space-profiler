@@ -12,6 +12,7 @@ import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.property.SimpleStringProperty
 import javafx.collections.FXCollections
 import javafx.scene.control.TreeItem
+import kotlinx.coroutines.cancel
 import mu.KotlinLogging
 import tornadofx.*
 import java.io.File
@@ -49,6 +50,9 @@ class FileTreeViewModel : ViewModel() {
         fileTreeProperty.onChange { node ->
             if (node != null)
                 openDirectory(node)
+        }
+        beforeShutdown {
+            watchService.cancel()
         }
     }
 
