@@ -1,7 +1,8 @@
 package io.dkozak.profiler.client.view
 
-import io.dkozak.profiler.client.view.dialog.StartScanDialog
-import javafx.stage.StageStyle
+
+import io.dkozak.profiler.client.view.dialog.openStartScanDialog
+
 import tornadofx.*
 
 /**
@@ -23,6 +24,6 @@ class RootView : View() {
     }
 
     init {
-        find<StartScanDialog>().openModal(stageStyle = StageStyle.UTILITY)
+        openStartScanDialog()
     }
 }

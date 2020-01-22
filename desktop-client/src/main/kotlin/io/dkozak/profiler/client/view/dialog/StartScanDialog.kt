@@ -8,8 +8,13 @@ import javafx.beans.property.SimpleIntegerProperty
 import javafx.beans.property.SimpleStringProperty
 import javafx.geometry.Pos
 import javafx.scene.Parent
+import javafx.stage.StageStyle
 import tornadofx.*
 import java.io.File
+
+fun UIComponent.openStartScanDialog() {
+    find<StartScanDialog>().openModal(stageStyle = StageStyle.UTILITY)
+}
 
 /**
  * Dialog for starting new scan.

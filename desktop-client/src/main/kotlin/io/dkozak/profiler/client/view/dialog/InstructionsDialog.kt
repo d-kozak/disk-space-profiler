@@ -1,9 +1,13 @@
 package io.dkozak.profiler.client.view.dialog
 
-import javafx.event.EventTarget
 import tornadofx.*
 
-private val text = """
+fun UIComponent.openInstructionsDialog() = dialog("Instructions") {
+    label(dialogText)
+}
+
+
+private val dialogText = """
     To start an analysis, select Analysis->Run and specify disk/folder to be analyzed.
     
     The results are shown in two views. On the left, you will the tree structure.
@@ -17,13 +21,5 @@ private val text = """
     Any item can be deleted by right-clicking on it and selecting delete or by pressing 
     delete when the item is selected.
 """.trimIndent()
-
-class InstructionsDialog : InfoDialog() {
-
-
-    override fun EventTarget.dialogContent() {
-        label(text)
-    }
-}
 
 

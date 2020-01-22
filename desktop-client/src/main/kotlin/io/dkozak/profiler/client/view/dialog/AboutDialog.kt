@@ -1,9 +1,13 @@
 package io.dkozak.profiler.client.view.dialog
 
-import javafx.event.EventTarget
 import tornadofx.*
 
-private val text = """
+fun UIComponent.openAboutDialog() = dialog("About") {
+    label(dialogText)
+}
+
+
+private val dialogText = """
     Developed based on task:
 
     Develop a disk space profiler – a cross-platform tool with a GUI that
@@ -35,11 +39,3 @@ private val text = """
     3. Simplicity and clarity of the source code.
     4. User experience.
 """.trimIndent()
-
-class AboutDialog : InfoDialog() {
-
-    override fun EventTarget.dialogContent() {
-        label(text)
-    }
-}
-

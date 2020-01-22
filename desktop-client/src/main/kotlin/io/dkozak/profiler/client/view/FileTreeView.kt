@@ -1,14 +1,13 @@
 package io.dkozak.profiler.client.view
 
 
-import io.dkozak.profiler.client.view.dialog.DeleteFileDialog
+import io.dkozak.profiler.client.view.dialog.openDeleteFileDialog
 import io.dkozak.profiler.client.viewmodel.FileTreeViewModel
 import io.dkozak.profiler.scanner.fs.FsNode
 import io.dkozak.profiler.scanner.fs.FsNodeByNameComparator
 import io.dkozak.profiler.scanner.fs.FsNodeBySizeComparator
 import io.dkozak.profiler.scanner.fs.isLazy
 import javafx.scene.input.KeyCode
-import javafx.stage.StageStyle
 import mu.KotlinLogging
 import tornadofx.*
 
@@ -39,7 +38,7 @@ class FileTreeView : View() {
                         node.expandedProperty().set(true)
                         fileTreeViewModel.openDirectory(node)
                     }
-                    KeyCode.DELETE -> find<DeleteFileDialog>(mapOf(DeleteFileDialog::fileToDelete to node)).openModal(stageStyle = StageStyle.UTILITY)
+                    KeyCode.DELETE -> openDeleteFileDialog(node)
                 }
             }
         }
@@ -75,7 +74,7 @@ class FileTreeView : View() {
                     if (node.value is FsNode.DiskRoot) {
                         logger.warn { "Attempt to delete $selectedValue, this type is not supported" }
                     } else {
-                        find<DeleteFileDialog>(mapOf(DeleteFileDialog::fileToDelete to node)).openModal(stageStyle = StageStyle.UTILITY)
+                        openDeleteFileDialog(node)
                     }
                 }
             }

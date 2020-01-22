@@ -1,6 +1,6 @@
 package io.dkozak.profiler.client.view
 
-import io.dkozak.profiler.client.view.dialog.DeleteFileDialog
+import io.dkozak.profiler.client.view.dialog.openDeleteFileDialog
 import io.dkozak.profiler.client.viewmodel.FileTreeViewModel
 import io.dkozak.profiler.scanner.fs.FsNodeByNameComparator
 import io.dkozak.profiler.scanner.fs.FsNodeBySizeComparator
@@ -8,7 +8,6 @@ import io.dkozak.profiler.scanner.fs.isLazy
 import javafx.scene.input.KeyCode
 import javafx.scene.layout.Priority
 import javafx.scene.text.FontWeight
-import javafx.stage.StageStyle
 import tornadofx.*
 
 /**
@@ -52,7 +51,7 @@ class DirectoryView : View() {
                 if (!event.isMetaDown && selectedItem != null) {
                     when (event.code) {
                         KeyCode.ENTER -> fileTreeViewModel.openDirectory(selectedItem)
-                        KeyCode.DELETE -> find<DeleteFileDialog>(mapOf(DeleteFileDialog::fileToDelete to selectedItem)).openModal(stageStyle = StageStyle.UTILITY)
+                        KeyCode.DELETE -> openDeleteFileDialog(selectedItem)
                     }
                 }
             }
@@ -99,8 +98,7 @@ class DirectoryView : View() {
                 }
                 item("Delete") {
                     action {
-                        find<DeleteFileDialog>(mapOf(DeleteFileDialog::fileToDelete to (selectedItem
-                                ?: return@action))).openModal(stageStyle = StageStyle.UTILITY)
+                        openDeleteFileDialog(selectedItem ?: return@action)
                     }
                 }
             }

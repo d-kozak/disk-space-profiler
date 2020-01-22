@@ -6,7 +6,12 @@ import io.dkozak.profiler.scanner.fs.FsNode
 import javafx.geometry.Pos
 import javafx.scene.Parent
 import javafx.scene.control.TreeItem
+import javafx.stage.StageStyle
 import tornadofx.*
+
+fun UIComponent.openDeleteFileDialog(fileNode: TreeItem<FsNode>) {
+    find<DeleteFileDialog>(mapOf(DeleteFileDialog::fileToDelete to fileNode)).openModal(stageStyle = StageStyle.UTILITY)
+}
 
 /**
  * Confirmation dialog for deleting files
