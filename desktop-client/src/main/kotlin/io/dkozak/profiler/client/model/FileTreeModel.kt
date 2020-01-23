@@ -2,11 +2,8 @@ package io.dkozak.profiler.client.model
 
 import io.dkozak.profiler.client.event.MessageEvent
 import io.dkozak.profiler.client.util.onUiThread
-import io.dkozak.profiler.scanner.AnalysisFinished
-import io.dkozak.profiler.scanner.ScanConfig
-import io.dkozak.profiler.scanner.TreeUpdate
+import io.dkozak.profiler.scanner.*
 import io.dkozak.profiler.scanner.fs.*
-import io.dkozak.profiler.scanner.startScannerManagerAsync
 import io.dkozak.profiler.scanner.util.UiThread
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleObjectProperty
@@ -58,12 +55,14 @@ class FileTreeModel : Controller(), CoroutineScope by CoroutineScope(Dispatchers
                                         } else {
                                             rootProperty.set(update.newChild)
                                         }
+                                        progressMessage(update.newChild.file.absolutePath, update.stats)
                                     }
                                     is TreeUpdate.ReplaceNodeRequest -> {
                                         registerExpandListeners(update.newNode)
                                         if (update.oldNode.parent != null)
                                             update.oldNode.replaceWith(update.newNode)
                                         else rootProperty.set(update.newNode)
+                                        progressMessage(update.newNode.file.absolutePath, update.stats)
                                     }
                                 }
                             }
@@ -74,9 +73,9 @@ class FileTreeModel : Controller(), CoroutineScope by CoroutineScope(Dispatchers
                         if (info != null) {
                             logger.info { info }
                             if (info.errorMessage == null) {
-                                fire(MessageEvent("Analysis of ${info.root.file.absolutePath} finished, it took ${info.stats.time} ms"))
+                                fire(MessageEvent("Analysis of ${info.root.file.absolutePath} finished, found ${info.stats.files} files and ${info.stats.directories} directories, it took ${info.stats.time} ms."))
                             } else {
-                                fire(MessageEvent("Analysis of ${info.root.file.absolutePath} failed: ${info.errorMessage}"))
+                                fire(MessageEvent("Analysis of ${info.root.file.absolutePath} failed: ${info.errorMessage}."))
                             }
                             anyAnalysisRunningProperty.set(info.anyAnalysisRunning)
                         }
@@ -138,6 +137,10 @@ class FileTreeModel : Controller(), CoroutineScope by CoroutineScope(Dispatchers
         node.detachFromTree()
         fire(MessageEvent("${if (node.value is FsNode.DirectoryNode) "Directory" else "File"} ${node.value.file.name} deleted"))
         return true
+    }
+
+    private fun progressMessage(path: String, stats: ScanStats) {
+        fire(MessageEvent("$path: ${stats.files} files,  ${stats.directories} directories, took ${stats.time} ms"))
     }
 }
 

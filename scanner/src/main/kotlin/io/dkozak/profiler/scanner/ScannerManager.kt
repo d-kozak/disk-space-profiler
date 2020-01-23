@@ -55,7 +55,9 @@ data class ScanStats(
         val files: Long,
         val directories: Long,
         val time: Long
-)
+) {
+    operator fun plus(other: ScanStats) = ScanStats(files + other.files, directories + other.directories, time + other.time)
+}
 
 fun CoroutineScope.startScannerManagerAsync(requestChannel: ReceiveChannel<ScanConfig>, treeUpdateChannel: SendChannel<TreeUpdate>, finishChannel: SendChannel<AnalysisFinished>) {
     val manager = ScannerManager(this, requestChannel, treeUpdateChannel, finishChannel)
@@ -139,20 +141,22 @@ private class ScannerManager(
 fun CoroutineScope.startScanAsync(scanConfig: ScanConfig, treeUpdateChannel: SendChannel<TreeUpdate>, scanningFinishedChannel: SendChannel<AnalysisFinished>) = launch {
     val start = System.currentTimeMillis()
     try {
-        coroutineScope {
+        val scanStats = coroutineScope {
             logger.info { "Executing scan with config: $scanConfig" }
             val (fsTree, lazyDirs, stats) = crawlFileTree(scanConfig)
             treeUpdateChannel.send(TreeUpdate.ReplaceNodeRequest(scanConfig.startNode, fsTree, stats))
 
-            lazyDirs.map {
+            val subtreeStats = lazyDirs.map {
                 async {
                     val (subtreeSize, stats) = scanSubtree(it.file)
                     val newNode = lazyNodeFor(it.file).also { it.value.size += subtreeSize }
                     treeUpdateChannel.send(TreeUpdate.ReplaceNodeRequest(it, newNode, stats))
+                    stats
                 }
-            }
+            }.awaitAll().fold(ScanStats(0, 0, 0), ScanStats::plus)
+            subtreeStats + stats
         }
-        scanningFinishedChannel.send(AnalysisFinished(scanConfig.startNode, ScanStats(0, 0, System.currentTimeMillis() - start)))
+        scanningFinishedChannel.send(AnalysisFinished(scanConfig.startNode, scanStats))
     } catch (ex: Exception) {
         if (ex is CancellationException) throw ex
         scanningFinishedChannel.send(AnalysisFinished(scanConfig.startNode, ScanStats(0, 0, System.currentTimeMillis() - start), errorMessage = ex.message
