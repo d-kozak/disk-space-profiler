@@ -56,7 +56,7 @@ fun TreeItem<FsNode>.replaceWith(newNode: TreeItem<FsNode>) {
 }
 
 /**
- * Inserts a new file node below this node while keeping it's sort order
+ * Inserts a new file node below this node while keeping it's sort order, replaces the old version if there is one
  */
 @Precondition("this.isDirectory")
 @Precondition("file.exists")
@@ -71,13 +71,16 @@ fun TreeItem<FsNode>.insertSorted(file: File): TreeItem<FsNode> {
 }
 
 /**
- * Inserts a new node below this node while keeping it's sort order
+ * Inserts a new node below this node while keeping it's sort order, replaces the old version if there is one
  */
 @Precondition("this.isDirectory")
 fun TreeItem<FsNode>.insertSorted(node: TreeItem<FsNode>): TreeItem<FsNode> {
     val toInsert = children.binarySearch(node, value.comparator)
-    check(toInsert < 0) { "node should NOT be in the tree right now, it was found at $toInsert, $node, $children" }
-    children.add(-toInsert - 1, node)
+    if (toInsert < 0) {
+        children.add(-toInsert - 1, node)
+    } else {
+        children[toInsert] = node
+    }
     propagateSizeUp(node.value.size)
     return node
 }
@@ -108,7 +111,7 @@ fun TreeItem<FsNode>.propagateSizeUp(value: FileSize) {
  * Create new lazy node for a directory represented by currentFile
  */
 @Invariant("currentFile.isDirectory")
-internal fun lazyNodeFor(currentFile: File): TreeItem<FsNode> {
+fun lazyNodeFor(currentFile: File): TreeItem<FsNode> {
     check(currentFile.isDirectory) { "file $currentFile is not a directory" }
     val lazyDir = TreeItem<FsNode>(FsNode.DirectoryNode(currentFile, true))
     lazyDir.value.size = currentFile.length().toFileSize()

@@ -43,9 +43,7 @@ class FileTreeView : View() {
             item("Refresh") {
                 action {
                     val node = selectionModel.selectedItems.firstOrNull() ?: return@action
-                    runAsync {
-                        fileTreeViewModel.rescanFrom(if (node.isLazy) node.parent else node, this)
-                    }
+                    fileTreeViewModel.rescanFrom(if (node.isLazy) node.parent else node)
                 }
             }
             menu("Sort") {

@@ -3,11 +3,13 @@ package io.dkozak.profiler.client.view.dialog
 import io.dkozak.profiler.client.event.MessageEvent
 import io.dkozak.profiler.client.view.ProgressView
 import io.dkozak.profiler.client.viewmodel.FileTreeViewModel
-import io.dkozak.profiler.scanner.DiskScanner
+import io.dkozak.profiler.scanner.ScanConfig
+import io.dkozak.profiler.scanner.fs.FsNode
 import javafx.beans.property.SimpleIntegerProperty
 import javafx.beans.property.SimpleStringProperty
 import javafx.geometry.Pos
 import javafx.scene.Parent
+import javafx.scene.control.TreeItem
 import javafx.stage.StageStyle
 import tornadofx.*
 import java.io.File
@@ -33,7 +35,7 @@ class StartScanDialog : Fragment() {
     /**
      * How deep should be the tree created internally
      */
-    private val treeDepth = formViewModel.bind { SimpleIntegerProperty(DiskScanner.ScanConfig.DEFAULT_TREE_DEPTH) }
+    private val treeDepth = formViewModel.bind { SimpleIntegerProperty(ScanConfig.DEFAULT_TREE_DEPTH) }
 
 
     override val root: Parent = vbox {
@@ -100,11 +102,8 @@ class StartScanDialog : Fragment() {
                             button("Start") {
                                 enableWhen(formViewModel.valid.and(status.running.not()))
                                 action {
-                                    runAsync {
-                                        fileTreeViewModel.newScan(rootDir.value, DiskScanner.ScanConfig(treeDepth.value.toInt()), this)
-                                    } ui {
-                                        close()
-                                    }
+                                    fileTreeViewModel.newScan(ScanConfig(treeDepth.value.toInt(), TreeItem(FsNode.DirectoryNode(File(rootDir.value)))))
+                                    close()
                                 }
                             }
                         }

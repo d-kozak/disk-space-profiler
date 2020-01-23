@@ -1,54 +1,60 @@
 package io.dkozak.profiler.scanner
 
 import io.dkozak.profiler.scanner.fs.FsNode
+import io.dkozak.profiler.scanner.fs.file
 import io.dkozak.profiler.scanner.fs.lazyNodeFor
-import io.dkozak.profiler.scanner.util.*
+import io.dkozak.profiler.scanner.util.Precondition
+import io.dkozak.profiler.scanner.util.scanSubtree
 import javafx.scene.control.TreeItem
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.withContext
 import mu.KotlinLogging
 import java.io.File
 
 
 private val logger = KotlinLogging.logger { }
 
+suspend fun CoroutineScope.startCrawling(config: ScanConfig, treeUpdateChannel: SendChannel<TreeUpdate>, scanningFinishedChannel: SendChannel<AnalysisFinished>) {
+    val crawler = FsCrawler(this, config, treeUpdateChannel)
+    val start = System.currentTimeMillis()
+    try {
+        crawler.start()
+        scanningFinishedChannel.send(AnalysisFinished(config.startNode, ScanStats(crawler.fileCount, crawler.directoryCount, System.currentTimeMillis() - start)))
+    } catch (ex: Exception) {
+        if (ex is CancellationException) throw ex
+        scanningFinishedChannel.send(AnalysisFinished(config.startNode, ScanStats(crawler.fileCount, crawler.directoryCount, System.currentTimeMillis() - start), errorMessage = ex.message
+                ?: "error"))
+    }
+}
+
 /**
  * Crawls the fs tree in depth-first traversal.
  * Creates intermediate representation up to specified depth,
  * then checks deeper subtrees using FileTreeScanningVisitor
  */
-internal class FsCrawler(
-        /**
-         * Node from which the analysis should be started
-         */
-        val startNode: TreeItem<FsNode>,
-        private val config: DiskScanner.ScanConfig,
-        private val monitor: ProgressMonitor) {
+private class FsCrawler(
+        private val scope: CoroutineScope,
+        private val config: ScanConfig,
+        private val treeUpdateChannel: SendChannel<TreeUpdate>
+) {
 
     /**
      * Count of files encountered
      */
-    var fileCount = 0
+    var fileCount = 0L
     /**
      * Count of directories encountered
      */
-    var directoryCount = 0
+    var directoryCount = 0L
 
-    /**
-     * current thread reference, it is expensive to ask about it every time
-     */
-    private val currentThread: Thread = Thread.currentThread()
+    var startTime = System.currentTimeMillis()
 
-    /**
-     * Crawl the fs tree starting from the diskRoot
-     * @return fs tree
-     */
-    fun crawl(): TreeItem<FsNode> {
-        monitor.message("scanning: ${startNode.value.file.name}")
-        val node = recursiveScan(startNode.value.file)
-        check(node.value is FsNode.DirectoryNode) { "node resulting from the scan is not a directory node" }
-        return startNode.apply {
-            this.value.size = node.value.size
-            this.children.addAll(node.children)
-        }
+    suspend fun start() {
+        startTime = System.currentTimeMillis()
+        recursiveScan(config.startNode.parent, config.startNode.file)
     }
 
 
@@ -57,62 +63,48 @@ internal class FsCrawler(
      * @param file to be crawled
      * @param currentDepth depth of depth-first search
      */
-    @Precondition("currentFile.exists")
-    fun recursiveScan(currentFile: File, currentDepth: Int = 0): TreeItem<FsNode> {
-        if (currentThread.isInterrupted) {
+    @Precondition("currentNode.file.exists")
+    private suspend fun recursiveScan(parent: TreeItem<FsNode>?, currentFile: File, currentDepth: Int = 0) {
+        check(currentFile.exists()) { "file ${currentFile.absolutePath} does not exist" }
+        if (!scope.isActive) {
             logger.info { "Cancelation detected" }
-            throw InterruptedException()
+            throw CancellationException()
         }
 
-        monitor.message("ScanInfo: ${fileCount} files, ${directoryCount} directories, depth $currentDepth")
-        check(currentFile.exists()) { "file ${currentFile.absolutePath} does not exist" }
         if (!currentFile.isDirectory) {
             fileCount++
-            return processSingleFile(currentFile)
-        }
-        directoryCount++
-        if (currentDepth >= config.treeDepth) {
-            val lazyDir = lazyNodeFor(currentFile)
-            val (subtreeSize, subtreeDirs, subtreeFiles) = scanSubtree(currentFile)
-            lazyDir.value.size = subtreeSize
-            directoryCount += subtreeDirs
-            fileCount += subtreeFiles
-            return lazyDir
-        }
-        return processDirectory(currentFile, currentDepth + 1)
-    }
+            val fileNode: TreeItem<FsNode> = TreeItem(FsNode.FileNode(currentFile))
+            treeUpdateChannel.send(TreeUpdate.AddNodeRequest(parent, fileNode, createScanStats()))
+        } else {
+            directoryCount++
+            if (currentDepth >= config.treeDepth) {
+                val lazyDir = lazyNodeFor(currentFile)
+                treeUpdateChannel.send(TreeUpdate.AddNodeRequest(parent, lazyDir, createScanStats()))
+                val (subtreeSize, subtreeDirs, subtreeFiles) = withContext(scope.coroutineContext) { scanSubtree(currentFile) }
+                fileCount += subtreeFiles
+                directoryCount += subtreeDirs
+                val newLazyDir = lazyNodeFor(currentFile).apply { this.value.size += subtreeSize }
+                treeUpdateChannel.send(TreeUpdate.ReplaceNodeRequest(lazyDir, newLazyDir, createScanStats()))
+            } else {
+                val directoryNode: TreeItem<FsNode> = TreeItem(FsNode.DirectoryNode(currentFile))
+                treeUpdateChannel.send(TreeUpdate.AddNodeRequest(parent, directoryNode, createScanStats()))
+                for (file in directoryNode.file.listFiles() ?: arrayOf()) {
+                    try {
+                        recursiveScan(directoryNode, file, currentDepth + 1)
+                    } catch (ex: CancellationException) {
+                        // just push it up
+                        throw ex
+                    } catch (ex: Exception) {
+                        if (ex.message != null) {
+                            logger.warn { ex.message }
+                        }
+                    }
 
-    private fun processSingleFile(currentFile: File): TreeItem<FsNode> {
-        return TreeItem(FsNode.FileNode(currentFile).apply {
-            size = FileSize(currentFile.length())
-        })
-
-    }
-
-    private fun processDirectory(currentFile: File, currentDepth: Int): TreeItem<FsNode> {
-        val files = currentFile.listFiles()
-                ?: throw IllegalStateException("current dir $currentFile returned null for listFiles")
-        val nodeInfo = FsNode.DirectoryNode(currentFile)
-
-        val directoryNode: TreeItem<FsNode> = TreeItem(nodeInfo)
-        directoryNode.value.size = currentFile.length().toFileSize()
-
-        for (file in files) {
-            try {
-                val node = recursiveScan(file, currentDepth)
-                directoryNode.value.size += node.value.size
-                directoryNode.children.add(node)
-            } catch (ex: InterruptedException) {
-                // just push it up
-                throw ex
-            } catch (ex: Exception) {
-                if (ex.message != null) {
-                    logger.warn { ex.message }
                 }
             }
-
         }
-        directoryNode.children.sortWith(directoryNode.value.comparator)
-        return directoryNode
     }
+
+
+    private fun createScanStats() = ScanStats(fileCount, directoryCount, System.currentTimeMillis() - startTime)
 }

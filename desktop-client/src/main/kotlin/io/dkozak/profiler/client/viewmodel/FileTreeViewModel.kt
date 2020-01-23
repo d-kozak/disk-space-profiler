@@ -2,8 +2,7 @@ package io.dkozak.profiler.client.viewmodel
 
 import io.dkozak.profiler.client.model.FileTreeModel
 import io.dkozak.profiler.client.util.DirectoryWatchService
-import io.dkozak.profiler.client.util.onUiThread
-import io.dkozak.profiler.scanner.DiskScanner
+import io.dkozak.profiler.scanner.ScanConfig
 import io.dkozak.profiler.scanner.fs.*
 import io.dkozak.profiler.scanner.util.BackgroundThread
 import io.dkozak.profiler.scanner.util.toFileSize
@@ -57,27 +56,20 @@ class FileTreeViewModel : ViewModel() {
 
     /**
      * Execute new scan.
-     * @param rootDirectory from where to start
      * @param scanConfig configuration
-     * @param fxTask current task
      */
     @BackgroundThread
-    fun newScan(rootDirectory: String, scanConfig: DiskScanner.ScanConfig, task: FXTask<*>) {
-        fileTreeModel.newScan(rootDirectory, scanConfig, task)
+    fun newScan(scanConfig: ScanConfig) {
+        fileTreeModel.newScan(scanConfig)
     }
 
     /**
      * Rescan the disk starting from specified node.
      * @param selectedNode from where to start
-     * @task current task
      */
     @BackgroundThread
-    fun rescanFrom(selectedNode: TreeItem<FsNode>, task: FXTask<*>) {
-        val newTree = fileTreeModel.rescanFrom(selectedNode, task)
-        if (newTree.isDirectory)
-            onUiThread {
-                openDirectory(newTree)
-            }
+    fun rescanFrom(selectedNode: TreeItem<FsNode>) {
+        fileTreeModel.rescanFrom(selectedNode)
     }
 
     /**
@@ -89,7 +81,7 @@ class FileTreeViewModel : ViewModel() {
             return
         }
         if (node.isLazy) {
-            fileTreeModel.rescanRequested(node)?.ui { openDirectory(it) }
+            fileTreeModel.rescanFrom(node)
         }
 
         directoryContent.setAll(node.children)

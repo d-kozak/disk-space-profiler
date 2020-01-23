@@ -77,10 +77,7 @@ class DirectoryView : View() {
                 item("Refresh") {
                     action {
                         val node = selectedItem ?: return@action
-                        runAsync {
-                            fileTreeViewModel.rescanFrom(if (node.isLazyFile) node.parent else node, this)
-                        }
-
+                        fileTreeViewModel.rescanFrom(if (node.isLazyFile) node.parent else node)
                     }
                 }
                 menu("Sort") {

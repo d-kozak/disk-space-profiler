@@ -1,16 +1,23 @@
 package io.dkozak.profiler.client.model
 
 import io.dkozak.profiler.client.event.MessageEvent
-import io.dkozak.profiler.client.util.ProgressAdapter
 import io.dkozak.profiler.client.util.onUiThread
-import io.dkozak.profiler.scanner.DiskScanner
-import io.dkozak.profiler.scanner.SimpleDiskScanner
+import io.dkozak.profiler.scanner.AnalysisFinished
+import io.dkozak.profiler.scanner.ScanConfig
+import io.dkozak.profiler.scanner.TreeUpdate
 import io.dkozak.profiler.scanner.fs.*
-import io.dkozak.profiler.scanner.util.BackgroundThread
+import io.dkozak.profiler.scanner.startScannerManagerAsync
 import io.dkozak.profiler.scanner.util.UiThread
+import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleObjectProperty
-import javafx.concurrent.Task
 import javafx.scene.control.TreeItem
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.Channel.Factory.BUFFERED
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.selects.select
 import mu.KotlinLogging
 import tornadofx.*
 
@@ -20,31 +27,72 @@ private val logger = KotlinLogging.logger { }
  * Maintains fsTree displayed in the app.
  * Updates it using DiskScanner.
  */
-class FileTreeModel : Controller() {
+class FileTreeModel : Controller(), CoroutineScope by CoroutineScope(Dispatchers.Default) {
 
     /**
      * Root of the file tree displayed in the app
      */
     val rootProperty = SimpleObjectProperty<TreeItem<FsNode>>(this, "fileTree", null)
 
-    private val discScanner = SimpleDiskScanner()
+
+    val anyAnalysisRunningProperty = SimpleBooleanProperty(this, "anyAnalysisRunning", false)
+
+    private val requestChannel = Channel<ScanConfig>(BUFFERED)
+    private val treeUpdateChannel = Channel<TreeUpdate>(BUFFERED)
+    private val finishChannel = Channel<AnalysisFinished>(BUFFERED)
+
+    init {
+        startScannerManagerAsync(requestChannel, treeUpdateChannel, finishChannel)
+        launch {
+            while (true) {
+                select<Unit> {
+                    treeUpdateChannel.onReceiveOrNull { update ->
+                        if (update != null) {
+                            logger.info { update }
+                            onUiThread {
+                                when (update) {
+                                    is TreeUpdate.AddNodeRequest -> {
+                                        registerExpandListeners(update.newChild)
+                                        if (update.parent != null) {
+                                            update.parent!!.insertSorted(update.newChild)
+                                        } else {
+                                            rootProperty.set(update.newChild)
+                                        }
+                                    }
+                                    is TreeUpdate.ReplaceNodeRequest -> {
+                                        update.oldNode.replaceWith(update.newNode)
+                                    }
+                                }
+                            }
+
+                        }
+                    }
+                    finishChannel.onReceiveOrNull { info ->
+                        if (info != null) {
+                            logger.info { info }
+                            if (info.errorMessage == null) {
+                                fire(MessageEvent("Analysis of ${info.root.file.absolutePath} finished, it took ${info.stats.time}"))
+                            } else {
+                                fire(MessageEvent("Analysis of ${info.root.file.absolutePath} failed: ${info.errorMessage}"))
+                            }
+                            anyAnalysisRunningProperty.set(info.anyAnalysisRunning)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 
     /**
      * Execute new scan.
-     * @param rootDirectory from where to start
      * @param scanConfig configuration
-     * @param fxTask current task
      */
-    @BackgroundThread
-    fun newScan(rootDirectory: String, scanConfig: DiskScanner.ScanConfig, task: FXTask<*>) {
-        fire(MessageEvent("Scan of '$rootDirectory' started"))
-        val (root, time) = discScanner.newScan(rootDirectory, scanConfig, ProgressAdapter(task))
-        fire(MessageEvent("Scan of '$rootDirectory' finished, it took ${time} ms"))
-        logger.info { "new fstree $root" }
-        onUiThread {
-            registerExpandListeners(root)
-            rootProperty.set(root)
-        }
+    @UiThread
+    fun newScan(scanConfig: ScanConfig) {
+        fire(MessageEvent("Scan of '${scanConfig.startNode.file.absolutePath}' started"))
+        runBlocking { requestChannel.send(scanConfig) }
+        anyAnalysisRunningProperty.set(true)
     }
 
     /**
@@ -52,33 +100,11 @@ class FileTreeModel : Controller() {
      * @param selectedNode from where to start
      * @task current task
      */
-    @BackgroundThread
-    fun rescanFrom(selectedNode: TreeItem<FsNode>, task: FXTask<*>): TreeItem<FsNode> {
-        fire(MessageEvent("Scan of '${selectedNode.file.absolutePath}' started"))
-        val parent = selectedNode.parent
-        val (newTree, time) = discScanner.rescanFrom(selectedNode, DiskScanner.ScanConfig(), ProgressAdapter(task))
-        onUiThread {
-            registerExpandListeners(newTree)
-            if (parent != null) {
-                selectedNode.replaceWith(newTree)
-            } else {
-                rootProperty.set(newTree)
-            }
-            newTree.isExpanded = true
-            fire(MessageEvent("Rescan of '${selectedNode.file.absolutePath}' finished, it took ${time} ms"))
-        }
-        return newTree
-    }
-
     @UiThread
-    fun rescanRequested(node: TreeItem<FsNode>): Task<TreeItem<FsNode>>? = if (!node.value.scanStarted) {
-        node.value.scanStarted = true
-        runAsync { rescanFrom(node, this) } ui {
-            node.value.scanStarted = false
-        }
-    } else {
-        logger.info { "scan for ${node.file.absolutePath} is already running" }
-        null
+    fun rescanFrom(selectedNode: TreeItem<FsNode>) {
+        fire(MessageEvent("Scan of '${selectedNode.file.absolutePath}' started"))
+        runBlocking { requestChannel.send(ScanConfig(startNode = selectedNode)) }
+        anyAnalysisRunningProperty.set(true)
     }
 
 
@@ -88,7 +114,7 @@ class FileTreeModel : Controller() {
     @UiThread
     private fun registerExpandListeners(node: TreeItem<FsNode>) {
         if (node.isLazyDir) {
-            node.expandedProperty().onChange { if (it) rescanRequested(node) }
+            node.expandedProperty().onChange { if (it) rescanFrom(node) }
         } else if (node.isDirectory) {
             node.children.forEach(::registerExpandListeners)
         }

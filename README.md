@@ -42,13 +42,10 @@ The following aspects will be evaluated:
 ## Extensions
 This sections contains features that were not implemented yet, but the author has thought about them 
 and would like to add them in the future.
-- [ ] FsTree updates on the fly - update the fs tree incrementally during analysis -> better user experience
-- [ ] Concurrent scanning - try to paralelize the scanning process
-- [ ] Locate biggest files - remember N biggest files found during scan and show them in the GUI in separate view(maybe as tabpane with DirectoryView?)
-- [ ] Native file open - add support to open files natively
-- [ ] Date modified - show date modified in the GUI  
+- [X] FsTree updates on the fly - update the fs tree incrementally during analysis -> better user experience
+- [X] Concurrent scanning - try to paralelize the scanning process
+- [ ] Locate biggest files - remember N biggest files found during scan and show them in the GUI in separate view(maybe as tabpane with DirectoryView?)  
 - [X] DirectoryWatchService using coroutines
-- [ ] FSCrawler using FileVisitor -> it will be probably faster for deeper trees
 - [X] When a lazy node is visible in the FileTreeView, automatically start incremental scan of its subtree
 
 ## Run
