@@ -11,7 +11,7 @@ import java.io.File
 /**
  * Node of the file system tree
  */
-sealed class FsNode(var file: File) {
+sealed class FsNode(var file: File, var isLazy: Boolean = false) {
     /**
      * Comparator used to sort children of current elements
      */
@@ -56,19 +56,12 @@ sealed class FsNode(var file: File) {
     }
 
 
-    open class DirectoryNode(file: File) : FsNode(file) {
+    class DirectoryNode(file: File, isLazy: Boolean = false) : FsNode(file, isLazy) {
         override fun toString(): String = "DirectoryNode(${file.absolutePath})"
     }
 
-    class FileNode(file: File) : FsNode(file) {
+    class FileNode(file: File, isLazy: Boolean = false) : FsNode(file, isLazy) {
         override fun toString(): String = "FileNode(${file.absolutePath})"
-    }
-
-    /**
-     * Lazy node in the file tree
-     */
-    class LazyNode(file: File) : FsNode(file) {
-        override fun toString(): String = "LazyNode(${file.absolutePath})"
     }
 
     override fun equals(other: Any?): Boolean {
@@ -81,7 +74,7 @@ sealed class FsNode(var file: File) {
     }
 
     override fun hashCode(): Int {
-        return file.absolutePath.hashCode()
+        return file.hashCode()
     }
 }
 

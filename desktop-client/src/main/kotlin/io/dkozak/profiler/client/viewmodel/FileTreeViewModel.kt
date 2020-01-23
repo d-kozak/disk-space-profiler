@@ -88,7 +88,9 @@ class FileTreeViewModel : ViewModel() {
             logger.warn { "node $node is not a directory" }
             return
         }
-        node.lazyChild?.let { fileTreeModel.rescanRequested(node)?.ui { openDirectory(it) } }
+        if (node.isLazy) {
+            fileTreeModel.rescanRequested(node)?.ui { openDirectory(it) }
+        }
 
         directoryContent.setAll(node.children)
         directoryParentProperty.set(node.parent)

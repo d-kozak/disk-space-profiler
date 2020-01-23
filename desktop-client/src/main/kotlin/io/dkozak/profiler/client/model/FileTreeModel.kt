@@ -87,8 +87,7 @@ class FileTreeModel : Controller() {
      */
     @UiThread
     private fun registerExpandListeners(node: TreeItem<FsNode>) {
-        val lazyChild = node.lazyChild
-        if (lazyChild != null) {
+        if (node.isLazyDir) {
             node.expandedProperty().onChange { if (it) rescanRequested(node) }
         } else if (node.isDirectory) {
             node.children.forEach(::registerExpandListeners)

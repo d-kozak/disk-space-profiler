@@ -4,7 +4,8 @@ import io.dkozak.profiler.client.view.dialog.openDeleteFileDialog
 import io.dkozak.profiler.client.viewmodel.FileTreeViewModel
 import io.dkozak.profiler.scanner.fs.FsNodeByNameComparator
 import io.dkozak.profiler.scanner.fs.FsNodeBySizeComparator
-import io.dkozak.profiler.scanner.fs.isLazy
+import io.dkozak.profiler.scanner.fs.isLazyFile
+import io.dkozak.profiler.scanner.fs.isNotLazy
 import javafx.scene.input.KeyCode
 import javafx.scene.layout.Priority
 import javafx.scene.text.FontWeight
@@ -57,11 +58,15 @@ class DirectoryView : View() {
             }
 
             onDoubleClick {
-                fileTreeViewModel.openDirectory(selectedItem ?: return@onDoubleClick)
+                val item = selectedItem ?: return@onDoubleClick
+                if (item.isNotLazy)
+                    fileTreeViewModel.openDirectory(item)
             }
 
             shortcut("alt+right") {
-                fileTreeViewModel.openDirectory(selectedItem ?: return@shortcut)
+                val item = selectedItem ?: return@shortcut
+                if (item.isNotLazy)
+                    fileTreeViewModel.openDirectory(item)
             }
 
             shortcut("alt+left") {
@@ -73,7 +78,7 @@ class DirectoryView : View() {
                     action {
                         val node = selectedItem ?: return@action
                         runAsync {
-                            fileTreeViewModel.rescanFrom(if (node.isLazy) node.parent else node, this)
+                            fileTreeViewModel.rescanFrom(if (node.isLazyFile) node.parent else node, this)
                         }
 
                     }

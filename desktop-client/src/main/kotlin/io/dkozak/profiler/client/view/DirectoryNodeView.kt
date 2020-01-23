@@ -3,7 +3,7 @@ package io.dkozak.profiler.client.view
 import io.dkozak.profiler.client.util.spaceColor
 import io.dkozak.profiler.scanner.fs.FsNode
 import io.dkozak.profiler.scanner.fs.isDirectory
-import io.dkozak.profiler.scanner.fs.isLazy
+import io.dkozak.profiler.scanner.fs.isLazyFile
 import javafx.geometry.Pos
 import javafx.scene.Parent
 import javafx.scene.control.TreeItem
@@ -19,7 +19,7 @@ class DirectoryNodeView : Fragment() {
     val node: TreeItem<FsNode> by param()
 
     override val root: Parent = hbox(4) {
-        if (node.isLazy) {
+        if (node.isLazyFile) {
             label("...loading...")
         } else {
             if (node.isDirectory)

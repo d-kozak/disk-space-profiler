@@ -14,23 +14,30 @@ val TreeItem<FsNode>.isDirectory: Boolean
     get() = this.value is FsNode.DirectoryNode
 
 /**
- * reference to a lazy child node, if there is one
+ * true if this node is either lazy (either file or dir)
  */
-val TreeItem<FsNode>.lazyChild: TreeItem<FsNode.LazyNode>?
-    get() = if (this.isDirectory) this.children.firstOrNull { it.isLazy } as? TreeItem<FsNode.LazyNode> else null
-
+val TreeItem<FsNode>.isLazy: Boolean
+    get() = this.value.isLazy
 
 /**
- * true if this node is not lazy
+ * true if this node is either not lazy (either file or dir)
  */
 val TreeItem<FsNode>.isNotLazy: Boolean
     get() = !this.isLazy
 
 /**
- * true if this node is lazy
+ * true if this node is a lazy file
  */
-val TreeItem<FsNode>.isLazy: Boolean
-    get() = this.value is FsNode.LazyNode
+val TreeItem<FsNode>.isLazyFile: Boolean
+    get() = !this.isDirectory && this.isLazy
+
+
+/**
+ * true if this node is a lazy dir
+ */
+val TreeItem<FsNode>.isLazyDir: Boolean
+    get() = this.isDirectory && this.isLazy
+
 
 /**
  * File represented by given node
@@ -103,9 +110,9 @@ fun TreeItem<FsNode>.propagateSizeUp(value: FileSize) {
 @Invariant("currentFile.isDirectory")
 internal fun lazyNodeFor(currentFile: File): TreeItem<FsNode> {
     check(currentFile.isDirectory) { "file $currentFile is not a directory" }
-    val lazyDir = TreeItem<FsNode>(FsNode.DirectoryNode(currentFile))
+    val lazyDir = TreeItem<FsNode>(FsNode.DirectoryNode(currentFile, true))
     lazyDir.value.size = currentFile.length().toFileSize()
-    val lazyNode: TreeItem<FsNode> = TreeItem(FsNode.LazyNode(currentFile))
-    lazyDir.children.add(lazyNode)
+    val lazyFile = TreeItem<FsNode>(FsNode.FileNode(currentFile, true))
+    lazyDir.children.add(lazyFile)
     return lazyDir
 }
