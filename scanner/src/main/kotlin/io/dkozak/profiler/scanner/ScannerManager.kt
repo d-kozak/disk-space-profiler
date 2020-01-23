@@ -2,6 +2,8 @@ package io.dkozak.profiler.scanner
 
 import io.dkozak.profiler.scanner.fs.FsNode
 import io.dkozak.profiler.scanner.fs.file
+import io.dkozak.profiler.scanner.fs.lazyNodeFor
+import io.dkozak.profiler.scanner.util.scanSubtree
 import javafx.scene.control.TreeItem
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -93,7 +95,7 @@ private class ScannerManager(
                             if (job != null) {
                                 logger.info { "Waiting for job to cancel" }
                                 job.cancelAndJoin()
-                                logger.info { "Job cancelled" }
+                                logger.info { "Job finished" }
                             } else {
                                 logger.warn { "scanner for ${info.root.file.absolutePath} not found" }
                             }
@@ -109,10 +111,21 @@ private class ScannerManager(
 
 
 fun CoroutineScope.startScanAsync(scanConfig: ScanConfig, treeUpdateChannel: SendChannel<TreeUpdate>, scanningFinishedChannel: SendChannel<AnalysisFinished>) = async {
+    val start = System.currentTimeMillis()
     coroutineScope {
         logger.info { "Executing scan with config: $scanConfig" }
-        startCrawling(scanConfig, treeUpdateChannel, scanningFinishedChannel)
+        val (fsTree, lazyDirs, stats) = crawlFileTree(scanConfig)
+        treeUpdateChannel.send(TreeUpdate.ReplaceNodeRequest(scanConfig.startNode, fsTree, stats))
+
+        lazyDirs.map {
+            async {
+                val (subtreeSize, stats) = scanSubtree(it.file)
+                val newNode = lazyNodeFor(it.file).also { it.value.size += subtreeSize }
+                treeUpdateChannel.send(TreeUpdate.ReplaceNodeRequest(it, newNode, stats))
+            }
+        }
     }
+    scanningFinishedChannel.send(AnalysisFinished(scanConfig.startNode, ScanStats(0, 0, System.currentTimeMillis() - start)))
 }
 
 

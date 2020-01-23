@@ -60,7 +60,10 @@ class FileTreeModel : Controller(), CoroutineScope by CoroutineScope(Dispatchers
                                         }
                                     }
                                     is TreeUpdate.ReplaceNodeRequest -> {
-                                        update.oldNode.replaceWith(update.newNode)
+                                        registerExpandListeners(update.newNode)
+                                        if (update.oldNode.parent != null)
+                                            update.oldNode.replaceWith(update.newNode)
+                                        else rootProperty.set(update.newNode)
                                     }
                                 }
                             }
@@ -71,7 +74,7 @@ class FileTreeModel : Controller(), CoroutineScope by CoroutineScope(Dispatchers
                         if (info != null) {
                             logger.info { info }
                             if (info.errorMessage == null) {
-                                fire(MessageEvent("Analysis of ${info.root.file.absolutePath} finished, it took ${info.stats.time}"))
+                                fire(MessageEvent("Analysis of ${info.root.file.absolutePath} finished, it took ${info.stats.time} ms"))
                             } else {
                                 fire(MessageEvent("Analysis of ${info.root.file.absolutePath} failed: ${info.errorMessage}"))
                             }
