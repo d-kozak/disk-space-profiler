@@ -29,6 +29,11 @@ data class ScanConfig(
     }
 }
 
+sealed class ScanRequest {
+    data class StartScan(val config: ScanConfig) : ScanRequest()
+    object CancelScans : ScanRequest()
+}
+
 data class AnalysisFinished(
         val root: TreeItem<FsNode>,
         val stats: ScanStats,
@@ -59,7 +64,7 @@ data class ScanStats(
     operator fun plus(other: ScanStats) = ScanStats(files + other.files, directories + other.directories, time + other.time)
 }
 
-fun CoroutineScope.startScannerManagerAsync(requestChannel: ReceiveChannel<ScanConfig>, treeUpdateChannel: SendChannel<TreeUpdate>, finishChannel: SendChannel<AnalysisFinished>) {
+fun CoroutineScope.startScannerManagerAsync(requestChannel: ReceiveChannel<ScanRequest>, treeUpdateChannel: SendChannel<TreeUpdate>, finishChannel: SendChannel<AnalysisFinished>) {
     val manager = ScannerManager(this, requestChannel, treeUpdateChannel, finishChannel)
     manager.startAsync()
 }
@@ -68,7 +73,7 @@ private val logger = KotlinLogging.logger { }
 
 private class ScannerManager(
         private val scope: CoroutineScope,
-        private val requestChannel: ReceiveChannel<ScanConfig>,
+        private val requestChannel: ReceiveChannel<ScanRequest>,
         private val treeUpdateChannel: SendChannel<TreeUpdate>,
         private val finishChannel: SendChannel<AnalysisFinished>
 ) {
@@ -91,12 +96,15 @@ private class ScannerManager(
             while (!requestChannel.isClosedForReceive) {
                 select<Unit> {
                     requestChannel.onReceiveOrNull { request ->
-                        if (request != null) {
-                            logger.info { request }
-                            if (shouldScan(request.startNode)) {
-                                stopSubScans(request.startNode)
-                                runningScans[request.startNode.file.absolutePath] = scope.startScanAsync(request, treeUpdateChannel, scanningFinishedChannel)
+                        logger.info { request }
+                        when (request) {
+                            is ScanRequest.StartScan -> {
+                                if (shouldScan(request.config.startNode)) {
+                                    stopSubScans(request.config.startNode)
+                                    runningScans[request.config.startNode.file.absolutePath] = scope.startScanAsync(request.config, treeUpdateChannel, scanningFinishedChannel)
+                                }
                             }
+                            is ScanRequest.CancelScans -> cancelAllScans()
                         }
                     }
                     scanningFinishedChannel.onReceiveOrNull { info ->
@@ -113,6 +121,13 @@ private class ScannerManager(
             }
             scanningFinishedChannel.close()
         }
+    }
+
+    private fun cancelAllScans() {
+        for (job in runningScans.values) {
+            job.cancel()
+        }
+        runningScans.clear()
     }
 
     /**

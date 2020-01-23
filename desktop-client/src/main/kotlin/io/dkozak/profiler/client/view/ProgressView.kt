@@ -20,6 +20,9 @@ class ProgressView : Fragment() {
         if (showMessage)
             label(status.message)
         progressbar()
+        button("Cancel") {
+            action { fileTreeModel.cancelScans() }
+        }
         visibleWhen { fileTreeModel.anyAnalysisRunningProperty }
     }
 }

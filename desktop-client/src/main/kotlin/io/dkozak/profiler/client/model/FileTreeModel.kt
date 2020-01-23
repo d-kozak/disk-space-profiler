@@ -34,7 +34,7 @@ class FileTreeModel : Controller(), CoroutineScope by CoroutineScope(Dispatchers
 
     val anyAnalysisRunningProperty = SimpleBooleanProperty(this, "anyAnalysisRunning", false)
 
-    private val requestChannel = Channel<ScanConfig>(BUFFERED)
+    private val requestChannel = Channel<ScanRequest>(BUFFERED)
     private val treeUpdateChannel = Channel<TreeUpdate>(BUFFERED)
     private val finishChannel = Channel<AnalysisFinished>(BUFFERED)
 
@@ -93,7 +93,7 @@ class FileTreeModel : Controller(), CoroutineScope by CoroutineScope(Dispatchers
     @UiThread
     fun newScan(scanConfig: ScanConfig) {
         fire(MessageEvent("Scan of '${scanConfig.startNode.file.absolutePath}' started"))
-        runBlocking { requestChannel.send(scanConfig) }
+        runBlocking { requestChannel.send(ScanRequest.StartScan(scanConfig)) }
         anyAnalysisRunningProperty.set(true)
     }
 
@@ -105,7 +105,7 @@ class FileTreeModel : Controller(), CoroutineScope by CoroutineScope(Dispatchers
     @UiThread
     fun rescanFrom(selectedNode: TreeItem<FsNode>) {
         fire(MessageEvent("Scan of '${selectedNode.file.absolutePath}' started"))
-        runBlocking { requestChannel.send(ScanConfig(startNode = selectedNode)) }
+        runBlocking { requestChannel.send(ScanRequest.StartScan(ScanConfig(startNode = selectedNode))) }
         anyAnalysisRunningProperty.set(true)
     }
 
@@ -142,6 +142,15 @@ class FileTreeModel : Controller(), CoroutineScope by CoroutineScope(Dispatchers
     private fun progressMessage(path: String, stats: ScanStats) {
         fire(MessageEvent("$path: ${stats.files} files,  ${stats.directories} directories, took ${stats.time} ms"))
     }
+
+    /**
+     * cancels all running scans
+     */
+    fun cancelScans(): Unit = runBlocking {
+        requestChannel.send(ScanRequest.CancelScans)
+        anyAnalysisRunningProperty.set(false)
+    }
+
 }
 
 
