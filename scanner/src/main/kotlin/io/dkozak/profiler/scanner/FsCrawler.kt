@@ -17,9 +17,9 @@ private val logger = KotlinLogging.logger { }
  */
 internal class FsCrawler(
         /**
-         * Root from which the analysis should be started
+         * Node from which the analysis should be started
          */
-        val diskRoot: TreeItem<FsNode>,
+        val startNode: TreeItem<FsNode>,
         private val config: DiskScanner.ScanConfig,
         private val monitor: ProgressMonitor) {
 
@@ -42,11 +42,10 @@ internal class FsCrawler(
      * @return fs tree
      */
     fun crawl(): TreeItem<FsNode> {
-        monitor.message("scanning: ${diskRoot.value.file.name}")
-        val node = recursiveScan(diskRoot.value.file)
+        monitor.message("scanning: ${startNode.value.file.name}")
+        val node = recursiveScan(startNode.value.file)
         check(node.value is FsNode.DirectoryNode) { "node resulting from the scan is not a directory node" }
-        return diskRoot.apply {
-            this.value.diskRoot = node.value.diskRoot
+        return startNode.apply {
             this.value.size = node.value.size
             this.children.addAll(node.children)
         }
@@ -73,7 +72,7 @@ internal class FsCrawler(
         }
         directoryCount++
         if (currentDepth >= config.treeDepth) {
-            val lazyDir = lazyNodeFor(currentFile, diskRoot)
+            val lazyDir = lazyNodeFor(currentFile)
             val (subtreeSize, subtreeDirs, subtreeFiles) = scanSubtree(currentFile)
             lazyDir.value.size = subtreeSize
             directoryCount += subtreeDirs
@@ -86,7 +85,6 @@ internal class FsCrawler(
     private fun processSingleFile(currentFile: File): TreeItem<FsNode> {
         return TreeItem(FsNode.FileNode(currentFile).apply {
             size = FileSize(currentFile.length())
-            this.diskRoot = this@FsCrawler.diskRoot
         })
 
     }
@@ -94,9 +92,7 @@ internal class FsCrawler(
     private fun processDirectory(currentFile: File, currentDepth: Int): TreeItem<FsNode> {
         val files = currentFile.listFiles()
                 ?: throw IllegalStateException("current dir $currentFile returned null for listFiles")
-        val nodeInfo = FsNode.DirectoryNode(currentFile).apply {
-            this.diskRoot = this@FsCrawler.diskRoot
-        }
+        val nodeInfo = FsNode.DirectoryNode(currentFile)
 
         val directoryNode: TreeItem<FsNode> = TreeItem(nodeInfo)
         directoryNode.value.size = currentFile.length().toFileSize()

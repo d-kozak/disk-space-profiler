@@ -20,13 +20,13 @@ class SimpleDiskScanner : DiskScanner {
         check(rootFile.isDirectory) { "Given root file $this is not a directory" }
 
         val start = System.currentTimeMillis()
-        val result = FsCrawler(TreeItem(FsNode.DiskRoot(rootFile)), config, monitor).crawl()
+        val result = FsCrawler(TreeItem(FsNode.DirectoryNode(rootFile)), config, monitor).crawl()
         return DiskScanner.ScanStatistics(result, System.currentTimeMillis() - start)
     }
 
     override fun rescanFrom(startNode: TreeItem<FsNode>, config: DiskScanner.ScanConfig, monitor: ProgressMonitor): DiskScanner.ScanStatistics {
         logger.info { "Executing reScan with $config" }
-        val crawler = FsCrawler(startNode.value.diskRoot, config, monitor)
+        val crawler = FsCrawler(startNode, config, monitor)
         val start = System.currentTimeMillis()
         val result = crawler.recursiveScan(startNode.value.file)
         return DiskScanner.ScanStatistics(result, System.currentTimeMillis() - start)

@@ -65,14 +65,7 @@ class FileTreeView : View() {
                 }
             }
             item("Delete") {
-                action {
-                    val node = selectionModel.selectedItems.firstOrNull() ?: return@action
-                    if (node.value is FsNode.DiskRoot) {
-                        logger.warn { "Attempt to delete $selectedValue, this type is not supported" }
-                    } else {
-                        openDeleteFileDialog(node)
-                    }
-                }
+                action { openDeleteFileDialog(selectionModel.selectedItems.firstOrNull() ?: return@action) }
             }
         }
     }

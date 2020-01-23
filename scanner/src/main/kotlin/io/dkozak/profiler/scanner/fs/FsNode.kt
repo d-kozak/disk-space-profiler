@@ -1,7 +1,6 @@
 package io.dkozak.profiler.scanner.fs
 
 
-import io.dkozak.profiler.scanner.util.Cleanup
 import io.dkozak.profiler.scanner.util.FileSize
 import io.dkozak.profiler.scanner.util.Invariant
 import io.dkozak.profiler.scanner.util.toFileSize
@@ -19,11 +18,6 @@ sealed class FsNode(var file: File) {
     var comparator: Comparator<TreeItem<FsNode>> = DEFAULT_COMPARATOR
 
     /**
-     * Root of the tree - every node can access it for convenience
-     */
-    internal lateinit var diskRoot: TreeItem<FsNode>
-
-    /**
      * Total size of the subtree starting at this node
      */
     var size = file.length().toFileSize()
@@ -32,13 +26,6 @@ sealed class FsNode(var file: File) {
      * True if this node's subtree is currently being scanned
      */
     var scanStarted = false
-
-    /**
-     * Root of the tree - every node can access it for convenience
-     */
-    @Cleanup("diskroot vs root - could not find to way to make the type system happy")
-    val root: TreeItem<DiskRoot>
-        get() = diskRoot as TreeItem<DiskRoot>
 
     /**
      * How much space of it's disk is given file taking
@@ -55,6 +42,12 @@ sealed class FsNode(var file: File) {
     val totalSpace: FileSize
         get() = this.file.totalSpace.toFileSize()
 
+    /**
+     * Used space of the disk on which corresponding file is located
+     */
+    val usedSpace: FileSize
+        get() = totalSpace - this.file.freeSpace.toFileSize()
+
     companion object {
         /**
          * Default comparator for nodes
@@ -65,14 +58,6 @@ sealed class FsNode(var file: File) {
 
     open class DirectoryNode(file: File) : FsNode(file) {
         override fun toString(): String = "DirectoryNode(${file.absolutePath})"
-    }
-
-    /**
-     * Root of the tree
-     */
-    @Cleanup("currently, there is no distinction between DiskRoot and a simple DirectoryNode")
-    class DiskRoot(file: File) : DirectoryNode(file) {
-        override fun toString(): String = "DiskRoot(${file.absolutePath})"
     }
 
     class FileNode(file: File) : FsNode(file) {
