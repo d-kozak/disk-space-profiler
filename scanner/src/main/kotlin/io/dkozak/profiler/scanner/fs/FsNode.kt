@@ -23,11 +23,6 @@ sealed class FsNode(var file: File, var isLazy: Boolean = false) {
     var size = file.length().toFileSize()
 
     /**
-     * True if this node's subtree is currently being scanned
-     */
-    var scanStarted = false
-
-    /**
      * How much space of it's disk is given file taking
      */
     @Invariant("0.0 <= spaceTaken <= 1.0")
