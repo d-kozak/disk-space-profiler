@@ -31,6 +31,12 @@ val TreeItem<FsNode>.isNotLazy: Boolean
 val TreeItem<FsNode>.isLazyFile: Boolean
     get() = !this.isDirectory && this.isLazy
 
+/**
+ * true if this node is a lazy file
+ */
+val TreeItem<FsNode>.isNotLazyFile: Boolean
+    get() = !this.isLazyFile
+
 
 /**
  * true if this node is a lazy dir

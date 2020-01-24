@@ -51,6 +51,10 @@ private class ScannerManager(
      */
     private val scanningFinishedChannel = Channel<ScanResult>(BUFFERED)
 
+    /**
+     * safety mechanism to ensure that only one instance is ever created
+     * it is initially null and it holds a refecence to the manager coroutine after first exectuion of startAsync
+     */
     private var job: Job? = null
 
     /**
@@ -81,7 +85,6 @@ private class ScannerManager(
                     scanningFinishedChannel.onReceiveOrNull { info ->
                         logger.info { info }
                         if (info != null) {
-
                             if (runningScans.remove(info.startNode.file.absolutePath) == null) {
                                 logger.warn { "could not remove corresponding job for $info" }
                             }

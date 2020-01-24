@@ -1,5 +1,6 @@
 package io.dkozak.profiler.client.model
 
+import io.dkozak.profiler.client.event.DirectoryLoadedEvent
 import io.dkozak.profiler.client.event.MessageEvent
 import io.dkozak.profiler.client.util.onUiThread
 import io.dkozak.profiler.scanner.dto.*
@@ -9,12 +10,9 @@ import io.dkozak.profiler.scanner.util.UiThread
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.scene.control.TreeItem
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.BUFFERED
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.selects.select
 import mu.KotlinLogging
 import tornadofx.*
@@ -40,6 +38,10 @@ class FileTreeModel : Controller(), CoroutineScope by CoroutineScope(Dispatchers
     private val finishChannel = Channel<ScanResult>(BUFFERED)
 
     init {
+        beforeShutdown {
+            this.cancel()
+        }
+
         startScannerManagerAsync(requestChannel, treeUpdateChannel, finishChannel)
         launch {
             while (true) {
@@ -74,6 +76,8 @@ class FileTreeModel : Controller(), CoroutineScope by CoroutineScope(Dispatchers
                         logger.info { info }
                         when (info) {
                             is ScanResult.Success -> {
+                                if (info.startNode.isDirectory)
+                                    fire(DirectoryLoadedEvent(info.startNode))
                                 fire(MessageEvent("Analysis of ${info.startNode.file.absolutePath} finished, found ${info.stats.files} files and ${info.stats.directories} directories, it took ${info.stats.time} ms."))
                             }
                             is ScanResult.Failure -> {

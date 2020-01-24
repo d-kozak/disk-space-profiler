@@ -1,5 +1,6 @@
 package io.dkozak.profiler.client.viewmodel
 
+import io.dkozak.profiler.client.event.DirectoryLoadedEvent
 import io.dkozak.profiler.client.model.FileTreeModel
 import io.dkozak.profiler.client.util.DirectoryWatchService
 import io.dkozak.profiler.scanner.dto.ScanConfig
@@ -44,11 +45,24 @@ class FileTreeViewModel : ViewModel() {
     val directoryParentProperty = SimpleObjectProperty<TreeItem<FsNode>>(this, "selectedNodeParent", null)
 
 
+    /**
+     * directory that should be displayed once it is available, or null if not waiting for any
+     */
+    private var wantedDirectory: TreeItem<FsNode>? = null
+
     init {
         fileTreeProperty.onChange { node ->
             if (node != null)
                 openDirectory(node)
         }
+
+        subscribe<DirectoryLoadedEvent> {
+            if (it.node == wantedDirectory) {
+                openDirectory(it.node)
+                wantedDirectory = null
+            }
+        }
+
         beforeShutdown {
             watchService.cancel()
         }
@@ -81,6 +95,7 @@ class FileTreeViewModel : ViewModel() {
             return
         }
         if (node.isLazy) {
+            wantedDirectory = node
             fileTreeModel.rescanFrom(node)
         }
 

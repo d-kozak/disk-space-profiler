@@ -5,7 +5,7 @@ import io.dkozak.profiler.client.viewmodel.FileTreeViewModel
 import io.dkozak.profiler.scanner.fs.FsNodeByNameComparator
 import io.dkozak.profiler.scanner.fs.FsNodeBySizeComparator
 import io.dkozak.profiler.scanner.fs.isLazyFile
-import io.dkozak.profiler.scanner.fs.isNotLazy
+import io.dkozak.profiler.scanner.fs.isNotLazyFile
 import javafx.scene.input.KeyCode
 import javafx.scene.layout.Priority
 import javafx.scene.text.FontWeight
@@ -59,13 +59,13 @@ class DirectoryView : View() {
 
             onDoubleClick {
                 val item = selectedItem ?: return@onDoubleClick
-                if (item.isNotLazy)
+                if (item.isNotLazyFile)
                     fileTreeViewModel.openDirectory(item)
             }
 
             shortcut("alt+right") {
                 val item = selectedItem ?: return@shortcut
-                if (item.isNotLazy)
+                if (item.isNotLazyFile)
                     fileTreeViewModel.openDirectory(item)
             }
 
