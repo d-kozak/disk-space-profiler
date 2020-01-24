@@ -1,6 +1,6 @@
 package io.dkozak.profiler.scanner.util
 
-import io.dkozak.profiler.scanner.ScanStats
+import io.dkozak.profiler.scanner.dto.ScanStatistics
 import mu.KotlinLogging
 import java.io.File
 import java.io.IOException
@@ -15,20 +15,23 @@ import java.nio.file.attribute.BasicFileAttributes
  * Scan subtree starting at given file
  * @return scanResult
  */
-internal fun scanSubtree(file: File): Pair<FileSize, ScanStats> {
-    val visitor = FileTreeScanningthis()
+internal fun scanSubtree(file: File): Pair<FileSize, ScanStatistics> {
+    val visitor = FileTreeScanningVisitor()
     Files.walkFileTree(file.toPath(), visitor)
-    return visitor.createResult()
+    return visitor.buildResult()
 }
 
 private val logger = KotlinLogging.logger { }
 
 /**
- * Filethis which traverses the whole file subtree
+ * FileVisitor which traverses the whole file subtree
  * and calculates it's size and the number of directories and files
  */
-internal class FileTreeScanningthis : FileVisitor<Path> {
+internal class FileTreeScanningVisitor : FileVisitor<Path> {
 
+    /**
+     * when the analysis started (you should use the visitor immediatelly after creating it, otherwise it will not be a valid start time)
+     */
     val start = System.currentTimeMillis()
 
     /**
@@ -44,7 +47,7 @@ internal class FileTreeScanningthis : FileVisitor<Path> {
      */
     var fileCount: Long = 0L
 
-    fun createResult() = this.size to ScanStats(this.fileCount, this.directoryCount, System.currentTimeMillis() - this.start)
+    fun buildResult() = this.size to ScanStatistics(this.fileCount, this.directoryCount, System.currentTimeMillis() - this.start)
 
 
     override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes?): FileVisitResult {

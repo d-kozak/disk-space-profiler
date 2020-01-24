@@ -2,8 +2,9 @@ package io.dkozak.profiler.client.model
 
 import io.dkozak.profiler.client.event.MessageEvent
 import io.dkozak.profiler.client.util.onUiThread
-import io.dkozak.profiler.scanner.*
+import io.dkozak.profiler.scanner.dto.*
 import io.dkozak.profiler.scanner.fs.*
+import io.dkozak.profiler.scanner.startScannerManagerAsync
 import io.dkozak.profiler.scanner.util.UiThread
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleObjectProperty
@@ -35,8 +36,8 @@ class FileTreeModel : Controller(), CoroutineScope by CoroutineScope(Dispatchers
     val anyAnalysisRunningProperty = SimpleBooleanProperty(this, "anyAnalysisRunning", false)
 
     private val requestChannel = Channel<ScanRequest>(BUFFERED)
-    private val treeUpdateChannel = Channel<TreeUpdate>(BUFFERED)
-    private val finishChannel = Channel<AnalysisFinished>(BUFFERED)
+    private val treeUpdateChannel = Channel<TreeUpdateRequest>(BUFFERED)
+    private val finishChannel = Channel<ScanResult>(BUFFERED)
 
     init {
         startScannerManagerAsync(requestChannel, treeUpdateChannel, finishChannel)
@@ -48,7 +49,7 @@ class FileTreeModel : Controller(), CoroutineScope by CoroutineScope(Dispatchers
                             logger.info { update }
                             onUiThread {
                                 when (update) {
-                                    is TreeUpdate.AddNodeRequest -> {
+                                    is TreeUpdateRequest.AddChild -> {
                                         registerExpandListeners(update.newChild)
                                         if (update.parent != null) {
                                             update.parent!!.insertSorted(update.newChild)
@@ -57,7 +58,7 @@ class FileTreeModel : Controller(), CoroutineScope by CoroutineScope(Dispatchers
                                         }
                                         progressMessage(update.newChild.file.absolutePath, update.stats)
                                     }
-                                    is TreeUpdate.ReplaceNodeRequest -> {
+                                    is TreeUpdateRequest.ReplaceNode -> {
                                         registerExpandListeners(update.newNode)
                                         if (update.oldNode.parent != null)
                                             update.oldNode.replaceWith(update.newNode)
@@ -70,15 +71,17 @@ class FileTreeModel : Controller(), CoroutineScope by CoroutineScope(Dispatchers
                         }
                     }
                     finishChannel.onReceiveOrNull { info ->
-                        if (info != null) {
-                            logger.info { info }
-                            if (info.errorMessage == null) {
-                                fire(MessageEvent("Analysis of ${info.root.file.absolutePath} finished, found ${info.stats.files} files and ${info.stats.directories} directories, it took ${info.stats.time} ms."))
-                            } else {
-                                fire(MessageEvent("Analysis of ${info.root.file.absolutePath} failed: ${info.errorMessage}."))
+                        logger.info { info }
+                        when (info) {
+                            is ScanResult.Success -> {
+                                fire(MessageEvent("Analysis of ${info.startNode.file.absolutePath} finished, found ${info.stats.files} files and ${info.stats.directories} directories, it took ${info.stats.time} ms."))
                             }
-                            anyAnalysisRunningProperty.set(info.anyAnalysisRunning)
+                            is ScanResult.Failure -> {
+                                fire(MessageEvent("Analysis of ${info.startNode.file.absolutePath} failed: ${info.message}."))
+                            }
                         }
+                        anyAnalysisRunningProperty.set(info?.anyAnalysisRunning ?: false)
+
                     }
                 }
             }
@@ -139,7 +142,7 @@ class FileTreeModel : Controller(), CoroutineScope by CoroutineScope(Dispatchers
         return true
     }
 
-    private fun progressMessage(path: String, stats: ScanStats) {
+    private fun progressMessage(path: String, stats: ScanStatistics) {
         fire(MessageEvent("$path: ${stats.files} files,  ${stats.directories} directories, took ${stats.time} ms"))
     }
 

@@ -2,7 +2,7 @@ package io.dkozak.profiler.client.viewmodel
 
 import io.dkozak.profiler.client.model.FileTreeModel
 import io.dkozak.profiler.client.util.DirectoryWatchService
-import io.dkozak.profiler.scanner.ScanConfig
+import io.dkozak.profiler.scanner.dto.ScanConfig
 import io.dkozak.profiler.scanner.fs.*
 import io.dkozak.profiler.scanner.util.BackgroundThread
 import io.dkozak.profiler.scanner.util.toFileSize

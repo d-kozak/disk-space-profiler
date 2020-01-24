@@ -1,5 +1,6 @@
 package io.dkozak.profiler.scanner
 
+import io.dkozak.profiler.scanner.dto.*
 import io.dkozak.profiler.scanner.fs.FsNode
 import io.dkozak.profiler.scanner.fs.file
 import io.dkozak.profiler.scanner.fs.lazyNodeFor
@@ -13,72 +14,42 @@ import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.selects.select
 import mu.KotlinLogging
 
-
 /**
- * Configuration options for scanning
+ * Starts a ScannerManager coroutine
  */
-data class ScanConfig(
-        /**
-         * Depth into which internal representation should be created, anything deeper is just scanned and summed up.
-         */
-        var treeDepth: Int = DEFAULT_TREE_DEPTH,
-        var startNode: TreeItem<FsNode>
-) {
-    companion object {
-        const val DEFAULT_TREE_DEPTH = 2
-    }
-}
-
-sealed class ScanRequest {
-    data class StartScan(val config: ScanConfig) : ScanRequest()
-    object CancelScans : ScanRequest()
-}
-
-data class AnalysisFinished(
-        val root: TreeItem<FsNode>,
-        val stats: ScanStats,
-        var anyAnalysisRunning: Boolean = false,
-        var errorMessage: String? = null
-)
-
-sealed class TreeUpdate {
-    data class AddNodeRequest(
-            val parent: TreeItem<FsNode>?,
-            val newChild: TreeItem<FsNode>,
-            val stats: ScanStats
-    ) : TreeUpdate()
-
-    data class ReplaceNodeRequest(
-            val oldNode: TreeItem<FsNode>,
-            val newNode: TreeItem<FsNode>,
-            val stats: ScanStats
-    ) : TreeUpdate()
-}
-
-
-data class ScanStats(
-        val files: Long,
-        val directories: Long,
-        val time: Long
-) {
-    operator fun plus(other: ScanStats) = ScanStats(files + other.files, directories + other.directories, time + other.time)
-}
-
-fun CoroutineScope.startScannerManagerAsync(requestChannel: ReceiveChannel<ScanRequest>, treeUpdateChannel: SendChannel<TreeUpdate>, finishChannel: SendChannel<AnalysisFinished>) {
-    val manager = ScannerManager(this, requestChannel, treeUpdateChannel, finishChannel)
+fun CoroutineScope.startScannerManagerAsync(requestChannel: ReceiveChannel<ScanRequest>, treeUpdateRequestChannel: SendChannel<TreeUpdateRequest>, finishChannel: SendChannel<ScanResult>) {
+    val manager = ScannerManager(this, requestChannel, treeUpdateRequestChannel, finishChannel)
     manager.startAsync()
 }
 
 private val logger = KotlinLogging.logger { }
 
+/**
+ * Scanner manager, keeps track of all running scans and maintains their execution
+ */
 private class ScannerManager(
+        /**
+         * scope in which new coroutine should be created
+         */
         private val scope: CoroutineScope,
+        /**
+         * channel for accepting new requests
+         */
         private val requestChannel: ReceiveChannel<ScanRequest>,
-        private val treeUpdateChannel: SendChannel<TreeUpdate>,
-        private val finishChannel: SendChannel<AnalysisFinished>
+        /**
+         * channel for sending tree updates
+         */
+        private val treeUpdateRequestChannel: SendChannel<TreeUpdateRequest>,
+        /**
+         * channel for sending finish signals
+         */
+        private val finishChannel: SendChannel<ScanResult>
 ) {
 
-    private val scanningFinishedChannel = Channel<AnalysisFinished>(BUFFERED)
+    /**
+     * channel used internally to notify the
+     */
+    private val scanningFinishedChannel = Channel<ScanResult>(BUFFERED)
 
     private var job: Job? = null
 
@@ -101,19 +72,20 @@ private class ScannerManager(
                             is ScanRequest.StartScan -> {
                                 if (shouldScan(request.config.startNode)) {
                                     stopSubScans(request.config.startNode)
-                                    runningScans[request.config.startNode.file.absolutePath] = scope.startScanAsync(request.config, treeUpdateChannel, scanningFinishedChannel)
+                                    runningScans[request.config.startNode.file.absolutePath] = scope.startScanAsync(request.config, treeUpdateRequestChannel, scanningFinishedChannel)
                                 }
                             }
                             is ScanRequest.CancelScans -> cancelAllScans()
                         }
                     }
                     scanningFinishedChannel.onReceiveOrNull { info ->
+                        logger.info { info }
                         if (info != null) {
-                            logger.info { info }
-                            if (runningScans.remove(info.root.file.absolutePath) == null) {
+
+                            if (runningScans.remove(info.startNode.file.absolutePath) == null) {
                                 logger.warn { "could not remove corresponding job for $info" }
                             }
-                            finishChannel.send(info.copy(anyAnalysisRunning = runningScans.isNotEmpty()))
+                            finishChannel.send(info.also { it.anyAnalysisRunning = runningScans.isNotEmpty() })
                         }
                     }
                 }
@@ -123,6 +95,9 @@ private class ScannerManager(
         }
     }
 
+    /**
+     * cancels all running scans
+     */
     private fun cancelAllScans() {
         for (job in runningScans.values) {
             job.cancel()
@@ -152,30 +127,30 @@ private class ScannerManager(
     }
 }
 
-
-fun CoroutineScope.startScanAsync(scanConfig: ScanConfig, treeUpdateChannel: SendChannel<TreeUpdate>, scanningFinishedChannel: SendChannel<AnalysisFinished>) = launch {
-    val start = System.currentTimeMillis()
+/**
+ * starts a new coroutine and scans specified fs tree using it
+ */
+fun CoroutineScope.startScanAsync(scanConfig: ScanConfig, treeUpdateRequestChannel: SendChannel<TreeUpdateRequest>, scanningFinishedChannel: SendChannel<ScanResult>) = launch {
     try {
         val scanStats = coroutineScope {
             logger.info { "Executing scan with config: $scanConfig" }
-            val (fsTree, lazyDirs, stats) = crawlFileTree(scanConfig)
-            treeUpdateChannel.send(TreeUpdate.ReplaceNodeRequest(scanConfig.startNode, fsTree, stats))
+            val (fsTree, lazyDirs, stats) = walkFileTree(scanConfig)
+            treeUpdateRequestChannel.send(TreeUpdateRequest.ReplaceNode(scanConfig.startNode, fsTree, stats))
 
             val subtreeStats = lazyDirs.map {
                 async {
                     val (subtreeSize, stats) = scanSubtree(it.file)
                     val newNode = lazyNodeFor(it.file).also { it.value.size += subtreeSize }
-                    treeUpdateChannel.send(TreeUpdate.ReplaceNodeRequest(it, newNode, stats))
+                    treeUpdateRequestChannel.send(TreeUpdateRequest.ReplaceNode(it, newNode, stats))
                     stats
                 }
-            }.awaitAll().fold(ScanStats(0, 0, 0), ScanStats::plus)
+            }.awaitAll().fold(ScanStatistics(0, 0, 0), ScanStatistics::plus)
             subtreeStats + stats
         }
-        scanningFinishedChannel.send(AnalysisFinished(scanConfig.startNode, scanStats))
+        scanningFinishedChannel.send(ScanResult.Success(scanConfig.startNode, scanStats))
     } catch (ex: Exception) {
         if (ex is CancellationException) throw ex
-        scanningFinishedChannel.send(AnalysisFinished(scanConfig.startNode, ScanStats(0, 0, System.currentTimeMillis() - start), errorMessage = ex.message
-                ?: "error"))
+        scanningFinishedChannel.send(ScanResult.Failure(scanConfig.startNode, ex.message ?: "error"))
     }
 
 }

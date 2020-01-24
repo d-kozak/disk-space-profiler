@@ -3,7 +3,7 @@ package io.dkozak.profiler.client.view.dialog
 import io.dkozak.profiler.client.event.MessageEvent
 import io.dkozak.profiler.client.view.ProgressView
 import io.dkozak.profiler.client.viewmodel.FileTreeViewModel
-import io.dkozak.profiler.scanner.ScanConfig
+import io.dkozak.profiler.scanner.dto.ScanConfig
 import io.dkozak.profiler.scanner.fs.FsNode
 import javafx.beans.property.SimpleIntegerProperty
 import javafx.beans.property.SimpleStringProperty

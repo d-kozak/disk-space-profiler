@@ -1,5 +1,7 @@
 package io.dkozak.profiler.scanner
 
+import io.dkozak.profiler.scanner.dto.ScanConfig
+import io.dkozak.profiler.scanner.dto.ScanStatistics
 import io.dkozak.profiler.scanner.fs.FsNode
 import io.dkozak.profiler.scanner.fs.file
 import io.dkozak.profiler.scanner.fs.lazyNodeFor
@@ -14,16 +16,21 @@ import java.io.File
 
 private val logger = KotlinLogging.logger { }
 
-fun CoroutineScope.crawlFileTree(config: ScanConfig): Triple<TreeItem<FsNode>, MutableList<TreeItem<FsNode>>, ScanStats> =
-        FsCrawler(this, config).start()
+
+/**
+ * Walks over file tree specified in the configuration
+ * @return fstree created during the walks and list of lazy directories that are part of the tree
+ */
+fun CoroutineScope.walkFileTree(config: ScanConfig): Triple<TreeItem<FsNode>, List<TreeItem<FsNode>>, ScanStatistics> =
+        FsWalker(this, config).walk()
 
 
 /**
- * Crawls the fs tree in depth-first traversal.
+ * Walks the fs tree in depth-first traversal.
  * Creates intermediate representation up to specified depth,
- * then checks deeper subtrees using FileTreeScanningVisitor
+ * creates LazyDirs for deeper subtrees
  */
-private class FsCrawler(
+private class FsWalker(
         private val scope: CoroutineScope,
         private val config: ScanConfig
 ) {
@@ -37,17 +44,23 @@ private class FsCrawler(
      */
     var directoryCount = 0L
 
+    /**
+     * Lazy directories created during the walk
+     */
     val lazyDirectories = mutableListOf<TreeItem<FsNode>>()
 
-    fun start(): Triple<TreeItem<FsNode>, MutableList<TreeItem<FsNode>>, ScanStats> {
+    /**
+     * Walk the file tree
+     */
+    fun walk(): Triple<TreeItem<FsNode>, MutableList<TreeItem<FsNode>>, ScanStatistics> {
         val start = System.currentTimeMillis()
         val tree = recursiveScan(config.startNode.file)
-        return Triple(tree, lazyDirectories, ScanStats(fileCount, directoryCount, System.currentTimeMillis() - start))
+        return Triple(tree, lazyDirectories, ScanStatistics(fileCount, directoryCount, System.currentTimeMillis() - start))
     }
 
 
     /**
-     * Crawl the fs tree starting from given file
+     * Recursively walks the fs tree starting from given file
      * @param file to be crawled
      * @param currentDepth depth of depth-first search
      */
