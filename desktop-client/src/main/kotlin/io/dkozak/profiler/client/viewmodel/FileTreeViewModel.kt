@@ -5,7 +5,6 @@ import io.dkozak.profiler.client.model.FileTreeModel
 import io.dkozak.profiler.client.util.DirectoryWatchService
 import io.dkozak.profiler.scanner.dto.ScanConfig
 import io.dkozak.profiler.scanner.fs.*
-import io.dkozak.profiler.scanner.util.BackgroundThread
 import io.dkozak.profiler.scanner.util.toFileSize
 import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.property.SimpleStringProperty
@@ -72,7 +71,6 @@ class FileTreeViewModel : ViewModel() {
      * Execute new scan.
      * @param scanConfig configuration
      */
-    @BackgroundThread
     fun newScan(scanConfig: ScanConfig) {
         fileTreeModel.newScan(scanConfig)
     }
@@ -81,7 +79,6 @@ class FileTreeViewModel : ViewModel() {
      * Rescan the disk starting from specified node.
      * @param selectedNode from where to start
      */
-    @BackgroundThread
     fun rescanFrom(selectedNode: TreeItem<FsNode>) {
         fileTreeModel.rescanFrom(selectedNode)
     }
