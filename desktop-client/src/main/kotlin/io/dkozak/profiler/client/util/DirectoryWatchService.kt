@@ -21,8 +21,14 @@ private val logger = KotlinLogging.logger { }
  */
 class DirectoryWatchService(private val fileTreeViewModel: FileTreeViewModel) : CoroutineScope by CoroutineScope(Dispatchers.Default) {
 
+    /**
+     * watchservice used to watch for file changes
+     */
     private val watchService = FileSystems.getDefault().newWatchService()
 
+    /**
+     * Channel used for sending requests to change the watched directory
+     */
     private val channel = Channel<File>(Channel.CONFLATED)
 
     init {
