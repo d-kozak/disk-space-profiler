@@ -57,7 +57,7 @@ class FileTreeViewModel : ViewModel() {
         }
 
         subscribe<DirectoryLoadedEvent> {
-            if (it.node == wantedDirectory) {
+            if (wantedDirectory?.value == it.node.value) {
                 openDirectory(it.node)
                 wantedDirectory = null
             }

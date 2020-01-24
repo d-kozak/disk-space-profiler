@@ -135,7 +135,7 @@ private class ScannerManager(
  */
 fun CoroutineScope.startScanAsync(scanConfig: ScanConfig, treeUpdateRequestChannel: SendChannel<TreeUpdateRequest>, scanningFinishedChannel: SendChannel<ScanResult>) = launch {
     try {
-        val scanStats = coroutineScope {
+        val (fsTree, scanStats) = coroutineScope {
             logger.info { "Executing scan with config: $scanConfig" }
             val (fsTree, lazyDirs, stats) = walkFileTree(scanConfig)
             treeUpdateRequestChannel.send(TreeUpdateRequest.ReplaceNode(scanConfig.startNode, fsTree, stats))
@@ -148,9 +148,9 @@ fun CoroutineScope.startScanAsync(scanConfig: ScanConfig, treeUpdateRequestChann
                     stats
                 }
             }.awaitAll().fold(ScanStatistics(0, 0, 0), ScanStatistics::plus)
-            subtreeStats + stats
+            fsTree to subtreeStats + stats
         }
-        scanningFinishedChannel.send(ScanResult.Success(scanConfig.startNode, scanStats))
+        scanningFinishedChannel.send(ScanResult.Success(fsTree, scanStats))
     } catch (ex: Exception) {
         if (ex is CancellationException) throw ex
         scanningFinishedChannel.send(ScanResult.Failure(scanConfig.startNode, ex.message ?: "error"))

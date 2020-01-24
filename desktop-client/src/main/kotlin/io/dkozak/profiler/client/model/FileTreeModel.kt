@@ -21,7 +21,7 @@ private val logger = KotlinLogging.logger { }
 
 /**
  * Maintains fsTree displayed in the app.
- * Updates it using DiskScanner.
+ * Updates it using ScannerManager.
  */
 class FileTreeModel : Controller(), CoroutineScope by CoroutineScope(Dispatchers.Default) {
 
